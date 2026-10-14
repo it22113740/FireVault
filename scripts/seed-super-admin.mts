@@ -1,8 +1,8 @@
 // Creates (or promotes) the first super admin. Safe to re-run.
 //   node --env-file=.env.local scripts/seed-super-admin.mts
 // Needs NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
-// SEED_SUPER_ADMIN_EMAIL, SEED_SUPER_ADMIN_NAME and, for a new user,
-// SEED_SUPER_ADMIN_PASSWORD (at least 12 characters).
+// SEED_SUPER_ADMIN_EMAIL, SEED_SUPER_ADMIN_NAME and SEED_SUPER_ADMIN_PASSWORD
+// (at least 8 characters; required for a new user, resets an existing one).
 import { createClient } from "@supabase/supabase-js";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -35,12 +35,19 @@ async function findUserId(target: string) {
 
 let userId = await findUserId(email);
 
+if (password !== undefined && password.length < 8) {
+  fail("SEED_SUPER_ADMIN_PASSWORD must be at least 8 characters.");
+}
+
 if (userId) {
   console.log(`• ${email} already exists; promoting to super admin.`);
-} else {
-  if (!password || password.length < 12) {
-    fail("Set SEED_SUPER_ADMIN_PASSWORD (at least 12 characters) to create the user.");
+  if (password) {
+    const { error } = await supabase.auth.admin.updateUserById(userId, { password });
+    if (error) fail(`Couldn't set the password: ${error.message}`);
+    console.log("• Password updated.");
   }
+} else {
+  if (!password) fail("Set SEED_SUPER_ADMIN_PASSWORD to create the user.");
   const { data, error } = await supabase.auth.admin.createUser({
     email,
     password,
