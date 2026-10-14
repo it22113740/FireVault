@@ -32,3 +32,24 @@ export const phoneSchema = z
   .transform((value) => toE164(value)!);
 
 export const uuidSchema = z.uuid();
+
+// Shown with thousands separators in the form ("15,000"); stored as a number
+export function parsePrice(value: string) {
+  const cleaned = value.replace(/,/g, "").trim();
+  return cleaned === "" ? 0 : Number(cleaned);
+}
+
+export function formatPriceInput(value: string) {
+  const cleaned = value.replace(/[^\d.]/g, "");
+  const [whole, ...decimals] = cleaned.split(".");
+  const grouped = whole ? Number(whole).toLocaleString("en-US") : "";
+  return decimals.length ? `${grouped}.${decimals.join("").slice(0, 2)}` : grouped;
+}
+
+export const priceInputSchema = z
+  .string()
+  .trim()
+  .refine(
+    (value) => value === "" || /^\d{1,10}(\.\d{1,2})?$/.test(value.replace(/,/g, "")),
+    "Enter a price like 15,000"
+  );

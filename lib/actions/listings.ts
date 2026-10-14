@@ -10,12 +10,11 @@ import { toWebp } from "@/lib/images";
 import { salesAdminCanEdit, type Availability, type PublishStatus } from "@/lib/listings";
 import { PUBLIC_IMAGES_BUCKET, publicImageUrl } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
-import { uuidSchema } from "@/lib/validations/common";
+import { parsePrice, uuidSchema } from "@/lib/validations/common";
 import {
   LISTING_INTENTS,
   listingFormSchema,
   missingForSubmit,
-  parsePrice,
   rejectListingSchema,
   type ListingIntent,
 } from "@/lib/validations/listing";

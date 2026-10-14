@@ -1,19 +1,7 @@
 import { z } from "zod";
+import { parsePrice, priceInputSchema } from "@/lib/validations/common";
 
 export const LISTING_LIMITS = { title: 100, description: 2000, reason: 500 } as const;
-
-// Shown with thousands separators in the form ("15,000"); stored as a number
-export function parsePrice(value: string) {
-  const cleaned = value.replace(/,/g, "").trim();
-  return cleaned === "" ? 0 : Number(cleaned);
-}
-
-export function formatPriceInput(value: string) {
-  const cleaned = value.replace(/[^\d.]/g, "");
-  const [whole, ...decimals] = cleaned.split(".");
-  const grouped = whole ? Number(whole).toLocaleString("en-US") : "";
-  return decimals.length ? `${grouped}.${decimals.join("").slice(0, 2)}` : grouped;
-}
 
 // Field formats, checked as you type and for every save (drafts included)
 export const listingFormSchema = z.object({
@@ -26,13 +14,7 @@ export const listingFormSchema = z.object({
     .string()
     .trim()
     .max(LISTING_LIMITS.description, `Keep the description under ${LISTING_LIMITS.description} characters`),
-  price: z
-    .string()
-    .trim()
-    .refine(
-      (value) => value === "" || /^\d{1,10}(\.\d{1,2})?$/.test(value.replace(/,/g, "")),
-      "Enter a price like 15,000"
-    ),
+  price: priceInputSchema,
   region: z.string().trim().max(20),
 });
 export type ListingFormValues = z.input<typeof listingFormSchema>;

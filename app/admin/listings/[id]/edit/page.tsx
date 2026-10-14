@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeftIcon } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { SkeletonForm } from "@/components/skeletons";
 import { PublishStatusBadge } from "@/components/status-badge";
 import { requireStaff } from "@/lib/auth";
 import { salesAdminCanEdit } from "@/lib/listings";
@@ -12,7 +13,6 @@ import { publicImageUrl } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import { uuidSchema } from "@/lib/validations/common";
 import { ListingForm } from "../../listing-form";
-import { ListingFormSkeleton } from "../../listing-form-skeleton";
 
 export const metadata: Metadata = { title: "Edit listing" };
 
@@ -28,7 +28,7 @@ export default function EditListingPage({ params }: Props) {
         <ArrowLeftIcon className="size-4" /> Listings
       </Link>
       <PageHeader title="Edit listing" />
-      <Suspense fallback={<ListingFormSkeleton />}>
+      <Suspense fallback={<SkeletonForm />}>
         <EditListing params={params} />
       </Suspense>
     </div>

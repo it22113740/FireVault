@@ -18,9 +18,9 @@ import { saveListing } from "@/lib/actions/listings";
 import { showActionError } from "@/lib/forms";
 import type { PublishStatus } from "@/lib/listings";
 import type { Role } from "@/lib/roles";
+import { formatPriceInput } from "@/lib/validations/common";
 import {
   LISTING_LIMITS,
-  formatPriceInput,
   listingFormSchema,
   missingForSubmit,
   type ListingFormValues,
