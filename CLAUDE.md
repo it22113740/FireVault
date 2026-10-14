@@ -11,7 +11,8 @@ UI/UX rules. Read the relevant section before changing anything.
   renamed). Read `node_modules/next/dist/docs/` before using Next APIs.
 - `cacheComponents` is on: anything reading cookies, `params` or `searchParams`
   must render inside `<Suspense>`. Public reads use `lib/supabase/public.ts`
-  (no cookies) inside `"use cache"` functions tagged with `lib/cache-tags.ts`;
+  (no cookies) inside `"use cache"` functions tagged with `lib/cache-tags.ts`,
+  behind `await connection()` so `next build` never queries the database;
   every mutation calls `updateTag()` for the tags it affects.
 - Supabase key env var is `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (new name for
   the anon key).
