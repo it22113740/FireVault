@@ -32,7 +32,7 @@ UI/UX rules. Read the relevant section before changing anything.
 ## Commands
 - `npm run dev` — local dev
 - `npx supabase db push` — apply migrations
-- `node --env-file=.env.local scripts/seed-super-admin.ts` — create the first super admin
+- `node --env-file=.env.local scripts/seed-super-admin.mts` — create the first super admin
 - `npm run build` — must pass before commits
 
 ## Workflow
