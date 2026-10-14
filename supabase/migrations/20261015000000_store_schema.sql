@@ -252,6 +252,9 @@ begin
     if old.publish_status = 'published' then
       if v_content_changed then
         new.publish_status := 'pending_review';
+      elsif new.publish_status = 'pending_review' then
+        -- "Submit changes" with nothing changed: stay live
+        new.publish_status := 'published';
       elsif new.publish_status not in ('published', 'archived') then
         raise exception 'Invalid status change' using errcode = '42501';
       end if;

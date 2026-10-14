@@ -155,10 +155,14 @@ export async function saveListing(formData: FormData): Promise<ActionResult<Save
     await supabase.storage.from(PUBLIC_IMAGES_BUCKET).remove([existing.image_path]);
   }
 
-  if (intent !== "autosave") {
-    await logAudit(profile.id, existing ? AUDIT_BY_INTENT[intent] : "listing.create", saved.id, {
-      status: saved.publish_status,
-    });
+  // Autosaves of an existing draft aren't worth an audit row every 10s
+  if (!existing || intent !== "autosave") {
+    await logAudit(
+      profile.id,
+      !existing ? "listing.create" : AUDIT_BY_INTENT[intent as Exclude<ListingIntent, "autosave">],
+      saved.id,
+      { status: saved.publish_status }
+    );
   }
   if (saved.publish_status === "published" || existing?.publish_status === "published") {
     updateTag(CACHE_TAGS.listings);
