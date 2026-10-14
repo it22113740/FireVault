@@ -1,33 +1,35 @@
-import type { Metadata } from "next";
-import "./globals.css";
-import { Anybody, Figtree } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Inter, Oxanium } from "next/font/google";
+import NextTopLoader from "nextjs-toploader";
+import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
+import "./globals.css";
 
-const display = Anybody({
-  subsets: ["latin"],
-  weight: "variable",
-  axes: ["wdth"],
-  variable: "--font-display",
-});
-
-const body = Figtree({
-  subsets: ["latin"],
-  weight: "variable",
-  variable: "--font-sans",
-});
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const oxanium = Oxanium({ subsets: ["latin"], variable: "--font-oxanium" });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: {
-    default: "FireVault · Premium game accounts",
+    default: "FireVault · Game accounts & top-ups",
     template: "%s · FireVault",
   },
-  description: "Hand-checked, high-level game accounts with fast, manual delivery.",
+  description:
+    "Browse game accounts and top-up packs, then buy directly on WhatsApp with manual payment.",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0b0b0f",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={cn("dark font-sans", display.variable, body.variable)}>
-      <body>{children}</body>
+    <html lang="en" className={cn("dark", inter.variable, oxanium.variable)}>
+      <body>
+        <NextTopLoader color="#ff8a00" height={2} showSpinner={false} />
+        {children}
+        <Toaster theme="dark" position="top-center" richColors closeButton />
+      </body>
     </html>
   );
 }
