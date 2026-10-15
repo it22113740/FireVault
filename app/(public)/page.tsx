@@ -2,9 +2,9 @@ import { Suspense } from "react";
 import Link from "next/link";
 import {
   ArrowRightIcon,
+  BookOpenIcon,
   CrownIcon,
   GemIcon,
-  MessageCircleIcon,
   SparklesIcon,
   StoreIcon,
   type LucideIcon,
@@ -16,6 +16,7 @@ import { SellerMarquee } from "@/components/seller-marquee";
 import { SkeletonCard } from "@/components/skeletons";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { WhatsAppButton } from "@/components/whatsapp-button";
 import { getSellers } from "@/lib/sellers";
 import { getSettings } from "@/lib/settings";
 import { getLatestListingPerSeller } from "@/lib/store";
@@ -63,8 +64,11 @@ export default function HomePage() {
             >
               Browse accounts <ArrowRightIcon />
             </Button>
+            <Suspense fallback={<Skeleton className="h-11 w-52" />}>
+              <HeroWhatsApp />
+            </Suspense>
             <Button size="lg" variant="outline" className="h-11 px-5" render={<Link href="/how-to-buy" />} nativeButton={false}>
-              <MessageCircleIcon /> How buying works
+              <BookOpenIcon /> How buying works
             </Button>
           </div>
         </FadeIn>
@@ -162,6 +166,22 @@ function LatestSkeleton() {
         </div>
       ))}
     </div>
+  );
+}
+
+// Direct line to the store admin (Settings → admin WhatsApp number). Hidden
+// until a number is set, rather than showing a disabled button.
+async function HeroWhatsApp() {
+  const settings = await getSettings();
+  if (!settings.admin_whatsapp) return null;
+  return (
+    <WhatsAppButton
+      number={settings.admin_whatsapp}
+      message="Hi Banzzz•23 FF E Store! I have a question."
+      label="Chat on WhatsApp"
+      variant="secondary"
+      className="px-5"
+    />
   );
 }
 
