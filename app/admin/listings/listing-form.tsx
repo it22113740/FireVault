@@ -16,6 +16,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Textarea } from "@/components/ui/textarea";
 import { saveListing } from "@/lib/actions/listings";
 import { showActionError } from "@/lib/forms";
+import { stageImage } from "@/lib/stage-image";
 import { LISTING_IMAGE_SIZE, type PublishStatus } from "@/lib/listings";
 import type { Role } from "@/lib/roles";
 import { formatPriceInput } from "@/lib/validations/common";
@@ -63,6 +64,7 @@ export function ListingForm({ role, regions, currency, listing }: ListingFormPro
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState(listing?.imageUrl ?? "");
   const [imageError, setImageError] = useState<string>();
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [pendingIntent, setPendingIntent] = useState<ListingIntent | null>(null);
   const [lastAutosave, setLastAutosave] = useState<Date | null>(null);
   const [autosaveRunning, setAutosaveRunning] = useState(false);
@@ -84,13 +86,18 @@ export function ListingForm({ role, regions, currency, listing }: ListingFormPro
   const hasUnsavedChanges = isDirty || imageFile !== null;
   const isDraftLike = status === null || status === "draft" || status === "rejected";
 
+  // A new image is uploaded to staging first (up to 30 MB, with progress);
+  // the action converts it to WebP. Throws if the upload fails.
   const buildFormData = useCallback(
-    (intent: ListingIntent, values: ListingFormValues) => {
+    async (intent: ListingIntent, values: ListingFormValues) => {
       const formData = new FormData();
       formData.set("intent", intent);
       if (id) formData.set("id", id);
       Object.entries(values).forEach(([key, value]) => formData.set(key, value));
-      if (imageFile) formData.set("image", imageFile);
+      if (imageFile) {
+        setUploadProgress(0);
+        formData.set("stagedImage", await stageImage(imageFile, setUploadProgress));
+      }
       return formData;
     },
     [id, imageFile]
@@ -106,10 +113,14 @@ export function ListingForm({ role, regions, currency, listing }: ListingFormPro
 
       autosaving.current = true;
       setAutosaveRunning(true);
-      const result = await saveListing(buildFormData("autosave", values));
+      const file = imageFile;
+      const result = await buildFormData("autosave", values)
+        .then(saveListing)
+        .catch(() => null);
       autosaving.current = false;
       setAutosaveRunning(false);
-      if (!result.ok) return;
+      setUploadProgress(null);
+      if (!result?.ok) return;
 
       if (!id) {
         setId(result.data.id);
@@ -117,8 +128,9 @@ export function ListingForm({ role, regions, currency, listing }: ListingFormPro
         window.history.replaceState(null, "", `/admin/listings/${result.data.id}/edit`);
       }
       setStatus(result.data.status);
-      if (imageFile) {
-        setImageFile(null);
+      // Only clear the picker if no newer image was chosen meanwhile
+      if (file) {
+        setImageFile((current) => (current === file ? null : current));
         setImageUrl(result.data.imageUrl);
       }
       form.reset(values, { keepErrors: true });
@@ -152,8 +164,18 @@ export function ListingForm({ role, regions, currency, listing }: ListingFormPro
 
       setPendingIntent(intent);
       startTransition(async () => {
-        const result = await saveListing(buildFormData(intent, values));
+        let formData: FormData;
+        try {
+          formData = await buildFormData(intent, values);
+        } catch (error) {
+          setPendingIntent(null);
+          setUploadProgress(null);
+          setImageError((error as Error).message);
+          return void toast.error((error as Error).message);
+        }
+        const result = await saveListing(formData);
         setPendingIntent(null);
+        setUploadProgress(null);
         if (!result.ok) {
           setImageError(result.fieldErrors?.image?.[0]);
           return showActionError(result, form.setError);
@@ -271,6 +293,8 @@ export function ListingForm({ role, regions, currency, listing }: ListingFormPro
             id="image"
             file={imageFile}
             currentUrl={imageUrl}
+            maxMb={30}
+            progress={uploadProgress}
             onFileChange={(file) => {
               setImageFile(file);
               setImageError(undefined);

@@ -3,9 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   experimental: {
     agentFeedback: true,
-    // Image uploads go through Server Actions (converted to WebP there).
-    // Files are capped at 4 MB in lib/images.ts; this leaves room for
-    // multipart overhead and stays under Vercel's 4.5 MB request limit.
+    // Only the public /apply screenshot (max 4 MB, lib/images.ts) is sent in
+    // an action body; this leaves room for multipart overhead under Vercel's
+    // 4.5 MB request limit. Staff images (up to 30 MB) are staged in Storage.
     serverActions: {
       bodySizeLimit: "4.4mb",
     },

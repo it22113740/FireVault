@@ -6,7 +6,7 @@ import { fail, invalid, ok, type ActionResult } from "@/lib/actions/result";
 import { logAudit, type AuditAction } from "@/lib/audit";
 import { requireStaff, requireSuperAdmin } from "@/lib/auth";
 import { CACHE_TAGS } from "@/lib/cache-tags";
-import { toWebp } from "@/lib/images";
+import { stagedToWebp } from "@/lib/images";
 import {
   LISTING_IMAGE_SIZE,
   salesAdminCanEdit,
@@ -89,12 +89,16 @@ export async function saveListing(formData: FormData): Promise<ActionResult<Save
     return { ok: false, error: "Choose a region from the list.", fieldErrors: { region: ["Choose a region from the list"] } };
   }
 
-  // New image: converted to WebP and uploaded as the acting user
+  // New image: the browser staged the original (up to 30 MB); convert it to
+  // WebP and upload that as the acting user
   let uploadedPath: string | null = null;
-  const file = formData.get("image");
-  if (file instanceof File && file.size > 0) {
+  const stagedImage = formData.get("stagedImage");
+  if (stagedImage) {
     // Half of 3500 × 5200, so stored images keep the listing ratio exactly
-    const image = await toWebp(file, { folder: "listings", maxWidth: LISTING_IMAGE_SIZE.width / 2 });
+    const image = await stagedToWebp(stagedImage, profile.id, {
+      folder: "listings",
+      maxWidth: LISTING_IMAGE_SIZE.width / 2,
+    });
     if ("error" in image) return { ok: false, error: image.error, fieldErrors: { image: [image.error] } };
     const { error } = await supabase.storage
       .from(PUBLIC_IMAGES_BUCKET)

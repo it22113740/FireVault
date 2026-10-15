@@ -6,7 +6,7 @@ import { fail, invalid, ok, type ActionResult } from "@/lib/actions/result";
 import { logAudit } from "@/lib/audit";
 import { requireSuperAdmin } from "@/lib/auth";
 import { CACHE_TAGS } from "@/lib/cache-tags";
-import { toWebp } from "@/lib/images";
+import { stagedToWebp } from "@/lib/images";
 import { PUBLIC_IMAGES_BUCKET } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import { parsePrice, uuidSchema } from "@/lib/validations/common";
@@ -40,9 +40,10 @@ export async function saveTopup(formData: FormData): Promise<ActionResult<{ id: 
   if (id && !existing) return fail("Top-up not found.");
 
   let uploadedPath: string | null = null;
-  const file = formData.get("image");
-  if (file instanceof File && file.size > 0) {
-    const image = await toWebp(file, { folder: "topups", maxWidth: 1000 });
+  // The browser staged the original (up to 30 MB); store it as WebP
+  const stagedImage = formData.get("stagedImage");
+  if (stagedImage) {
+    const image = await stagedToWebp(stagedImage, profile.id, { folder: "topups", maxWidth: 1000 });
     if ("error" in image) return { ok: false, error: image.error, fieldErrors: { image: [image.error] } };
     const { error } = await supabase.storage
       .from(PUBLIC_IMAGES_BUCKET)

@@ -14,6 +14,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Textarea } from "@/components/ui/textarea";
 import { saveTopup } from "@/lib/actions/topups";
 import { showActionError } from "@/lib/forms";
+import { stageImage } from "@/lib/stage-image";
 import { TOPUP_CATEGORIES, type TopupCategory } from "@/lib/topups";
 import { formatPriceInput } from "@/lib/validations/common";
 import {
@@ -46,6 +47,7 @@ export function TopupForm({
   const router = useRouter();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageError, setImageError] = useState<string>();
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [pendingIntent, setPendingIntent] = useState<TopupIntent | null>(null);
   const [, startTransition] = useTransition();
 
@@ -86,12 +88,24 @@ export function TopupForm({
       formData.set("intent", intent);
       if (topup) formData.set("id", topup.id);
       Object.entries(values).forEach(([key, value]) => formData.set(key, value));
-      if (imageFile) formData.set("image", imageFile);
 
       setPendingIntent(intent);
       startTransition(async () => {
+        // New image goes to staging first (up to 30 MB); the action converts it
+        if (imageFile) {
+          try {
+            setUploadProgress(0);
+            formData.set("stagedImage", await stageImage(imageFile, setUploadProgress));
+          } catch (error) {
+            setPendingIntent(null);
+            setUploadProgress(null);
+            setImageError((error as Error).message);
+            return void toast.error((error as Error).message);
+          }
+        }
         const result = await saveTopup(formData);
         setPendingIntent(null);
+        setUploadProgress(null);
         if (!result.ok) {
           setImageError(result.fieldErrors?.image?.[0]);
           return showActionError(result, form.setError);
@@ -177,6 +191,8 @@ export function TopupForm({
             id="image"
             file={imageFile}
             currentUrl={topup?.imageUrl}
+            maxMb={30}
+            progress={uploadProgress}
             onFileChange={(file) => {
               setImageFile(file);
               setImageError(undefined);

@@ -5,7 +5,6 @@ import { ImageIcon, UploadIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
-const MAX_BYTES = 4 * 1024 * 1024;
 
 type ImagePickerProps = {
   id?: string;
@@ -16,6 +15,9 @@ type ImagePickerProps = {
   error?: string;
   aspect?: "video" | "4/3" | "square" | "portrait" | "auto";
   label?: string;
+  maxMb?: number;
+  // Upload progress 0–100 while the file is being sent; null when idle
+  progress?: number | null;
 };
 
 // Instant local preview; the server re-checks type/size and converts to WebP
@@ -27,6 +29,8 @@ export function ImagePicker({
   error,
   aspect = "4/3",
   label = "Choose image",
+  maxMb = 4,
+  progress = null,
 }: ImagePickerProps) {
   const input = useRef<HTMLInputElement>(null);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -43,7 +47,9 @@ export function ImagePicker({
     if (input.current) input.current.value = "";
     if (!selected) return;
     if (!ACCEPTED.includes(selected.type)) return setLocalError("Use a JPG, PNG or WebP image.");
-    if (selected.size > MAX_BYTES) return setLocalError("Images must be 4 MB or smaller.");
+    if (selected.size > maxMb * 1024 * 1024) {
+      return setLocalError(`Images must be ${maxMb} MB or smaller.`);
+    }
     setLocalError(null);
     onFileChange(selected);
   }
@@ -64,9 +70,10 @@ export function ImagePicker({
       <button
         type="button"
         onClick={() => input.current?.click()}
+        disabled={progress !== null}
         data-invalid={message ? true : undefined}
         className={cn(
-          "relative flex w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border-2 border-dashed bg-muted/40 text-sm transition-colors hover:border-primary/60 data-invalid:border-destructive",
+          "relative flex w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border-2 border-dashed bg-muted/40 text-sm transition-colors hover:border-primary/60 disabled:pointer-events-none data-invalid:border-destructive",
           aspect === "video" && "aspect-video",
           aspect === "4/3" && "aspect-[4/3]",
           aspect === "square" && "aspect-square",
@@ -88,11 +95,28 @@ export function ImagePicker({
               <UploadIcon className="size-5 text-muted-foreground" />
             </span>
             <span className="font-medium">{label}</span>
-            <span className="text-xs text-muted-foreground">JPG, PNG or WebP up to 4 MB</span>
+            <span className="text-xs text-muted-foreground">JPG, PNG or WebP up to {maxMb} MB</span>
           </>
         )}
       </button>
-      {file && !message && (
+      {progress !== null && (
+        <div className="flex flex-col gap-1" aria-live="polite">
+          <div
+            className="h-1.5 overflow-hidden rounded-full bg-muted"
+            role="progressbar"
+            aria-valuenow={progress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Upload progress"
+          >
+            <div className="h-full bg-primary transition-[width] duration-200" style={{ width: `${progress}%` }} />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {progress < 100 ? `Uploading ${progress}%` : "Converting to WebP…"}
+          </p>
+        </div>
+      )}
+      {file && progress === null && !message && (
         <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <ImageIcon className="size-3.5" /> Will be converted to WebP when you save.
         </p>
