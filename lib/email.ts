@@ -1,6 +1,6 @@
 import "server-only";
 
-// Non-auth emails (e.g. application denied) via Resend's REST API. Auth emails
+// Non-auth emails (new applications and denials) via Resend's REST API. Auth emails
 // (password reset) are sent by Supabase through its own SMTP settings.
 // Returns false when email isn't configured or sending fails.
 export async function sendEmail({

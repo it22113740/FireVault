@@ -88,7 +88,7 @@ export async function submitApplication(formData: FormData): Promise<ActionResul
     .upload(image.path, image.body, { contentType: "image/webp" });
   if (uploadError) return fail("Couldn't upload your screenshot. Please try again.");
 
-  const { error } = await admin.from("sales_admin_applications").insert({
+  const { data: savedApplication, error } = await admin.from("sales_admin_applications").insert({
     full_name: application.fullName,
     email: application.email,
     whatsapp_number: application.whatsappNumber,
@@ -96,7 +96,7 @@ export async function submitApplication(formData: FormData): Promise<ActionResul
     contact_number: application.contactNumber,
     screenshot_path: image.path,
     ip_hash: ipHash,
-  });
+  }).select("id, created_at").single();
 
   if (error) {
     await admin.storage.from(APPLICATIONS_BUCKET).remove([image.path]);
@@ -106,6 +106,49 @@ export async function submitApplication(formData: FormData): Promise<ActionResul
         ? "You already have an application waiting for review with this email."
         : "Couldn't submit your application. Please try again."
     );
+  }
+
+  // The application is already saved: notification failures must not invite
+  // applicants to resubmit or prevent them from reaching the success page.
+  try {
+    const { data: recipients, error: recipientsError } = await admin
+      .from("profiles")
+      .select("email")
+      .eq("role", "super_admin")
+      .eq("is_active", true);
+
+    if (recipientsError || !recipients?.length) {
+      console.error("Application notification: couldn't find active super admins", savedApplication.id);
+    } else {
+      const text = [
+        "A new FireVault seller application is waiting for review.",
+        "",
+        `Application ID: ${savedApplication.id}`,
+        `Submitted at: ${savedApplication.created_at}`,
+        "Status: Pending",
+        `Full name: ${application.fullName}`,
+        `Email: ${application.email}`,
+        `WhatsApp number: ${application.whatsappNumber}`,
+        `Contact number: ${application.contactNumber}`,
+        `WhatsApp group: ${application.whatsappGroupUrl}`,
+        "",
+        "Review the application and its screenshot (super admin sign-in required):",
+        `${SITE_URL}/admin/applications`,
+      ].join("\n");
+
+      await Promise.all([...new Set(recipients.map(({ email }) => email))].map(async (to) => {
+        const sent = await sendEmail({
+          to,
+          subject: "New FireVault seller application",
+          text,
+        });
+        if (!sent) {
+          console.error("Application notification: email not sent", savedApplication.id);
+        }
+      }));
+    }
+  } catch {
+    console.error("Application notification failed", savedApplication.id);
   }
 
   redirect("/apply/success");

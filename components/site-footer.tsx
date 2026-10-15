@@ -14,6 +14,9 @@ export function SiteFooter() {
             Game accounts and top-up packs. Every purchase happens on WhatsApp with
             manual payment.
           </p>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Support: <a href="mailto:subanofficial14@gmail.com" className="break-all hover:text-foreground">subanofficial14@gmail.com</a>
+          </p>
         </div>
         <nav className="grid grid-cols-2 gap-x-8 gap-y-2 text-base">
           {LINKS.map(({ href, label }) => (
