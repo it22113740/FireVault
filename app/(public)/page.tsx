@@ -84,10 +84,6 @@ export default function HomePage() {
         </Suspense>
       </section>
 
-      <Suspense fallback={<TopSellersSkeleton />}>
-        <TopSellers />
-      </Suspense>
-
       <section className="mx-auto max-w-6xl px-4 pb-12">
         <Suspense fallback={<Skeleton className="h-[34rem] rounded-3xl lg:h-[28rem]" />}>
           <Reveal>
@@ -95,6 +91,10 @@ export default function HomePage() {
           </Reveal>
         </Suspense>
       </section>
+
+      <Suspense fallback={<TopSellersSkeleton />}>
+        <TopSellers />
+      </Suspense>
 
       <section className="mx-auto max-w-6xl px-4 pb-16">
         <Reveal>
