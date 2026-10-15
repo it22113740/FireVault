@@ -4,16 +4,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeftIcon, Gamepad2Icon, MapPinIcon, ShieldCheckIcon } from "lucide-react";
 import { CopyIdButton } from "@/components/copy-id-button";
-import { FadeImage } from "@/components/fade-image";
 import { FadeIn } from "@/components/motion";
 import { AvailabilityBadge } from "@/components/status-badge";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { formatPrice, shortId } from "@/lib/format";
 import { getSettings } from "@/lib/settings";
 import { getPublishedListing } from "@/lib/store";
-import { cn } from "@/lib/utils";
 import { listingMessage } from "@/lib/whatsapp-messages";
 import { AccountDetailSkeleton } from "./account-detail-skeleton";
+import { ZoomableImage } from "./zoomable-image";
 
 type Props = PageProps<"/accounts/[id]">;
 
@@ -66,22 +65,8 @@ async function AccountDetail({ params }: { params: Props["params"] }) {
   return (
     <FadeIn className="grid gap-6 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] md:gap-10">
       {listing.imageUrl ? (
-        // Whole image at its own aspect ratio, never cropped; very tall
-        // screenshots are capped at 75% of the screen and scaled down
-        <div className="overflow-hidden rounded-2xl border bg-muted md:self-start">
-          <FadeImage
-            src={listing.imageUrl}
-            alt={listing.title}
-            width={1600}
-            height={1200}
-            priority
-            sizes="(min-width: 768px) 600px, 100vw"
-            className={cn(
-              "h-auto max-h-[75svh] w-full object-contain",
-              reserved && "opacity-70 grayscale"
-            )}
-          />
-        </div>
+        // Whole image at its own aspect ratio, never cropped; tap to zoom
+        <ZoomableImage src={listing.imageUrl} alt={listing.title} dimmed={reserved} />
       ) : (
         <div className="relative aspect-[4/3] rounded-2xl border bg-muted">
           <Gamepad2Icon className="absolute inset-0 m-auto size-12 text-muted-foreground" />
