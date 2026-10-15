@@ -11,6 +11,7 @@ import { WhatsAppButton } from "@/components/whatsapp-button";
 import { formatPrice, shortId } from "@/lib/format";
 import { getSettings } from "@/lib/settings";
 import { getPublishedListing } from "@/lib/store";
+import { cn } from "@/lib/utils";
 import { listingMessage } from "@/lib/whatsapp-messages";
 import { AccountDetailSkeleton } from "./account-detail-skeleton";
 
@@ -64,20 +65,28 @@ async function AccountDetail({ params }: { params: Props["params"] }) {
 
   return (
     <FadeIn className="grid gap-6 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] md:gap-10">
-      <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border bg-muted">
-        {listing.imageUrl ? (
+      {listing.imageUrl ? (
+        // Whole image at its own aspect ratio, never cropped; very tall
+        // screenshots are capped at 75% of the screen and scaled down
+        <div className="overflow-hidden rounded-2xl border bg-muted md:self-start">
           <FadeImage
             src={listing.imageUrl}
             alt={listing.title}
-            fill
+            width={1600}
+            height={1200}
             priority
             sizes="(min-width: 768px) 600px, 100vw"
-            className={reserved ? "object-cover opacity-70 grayscale" : "object-cover"}
+            className={cn(
+              "h-auto max-h-[75svh] w-full object-contain",
+              reserved && "opacity-70 grayscale"
+            )}
           />
-        ) : (
+        </div>
+      ) : (
+        <div className="relative aspect-[4/3] rounded-2xl border bg-muted">
           <Gamepad2Icon className="absolute inset-0 m-auto size-12 text-muted-foreground" />
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="flex flex-col gap-5 md:sticky md:top-24 md:self-start">
         <div className="flex flex-col gap-3">
