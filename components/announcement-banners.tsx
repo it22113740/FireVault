@@ -1,11 +1,13 @@
 import { getPublishedAnnouncements } from "@/lib/announcements";
 import { publicImageUrl } from "@/lib/storage";
+import { AnnouncementHeading } from "@/components/announcement-heading";
 
 export async function AnnouncementBanners() {
   const announcements = await getPublishedAnnouncements();
   if (!announcements.length) return null;
   return (
-    <section aria-label="Announcements" className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pb-12">
+    <section aria-labelledby="announcements-heading" className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pb-12">
+      <AnnouncementHeading />
       {announcements.map((announcement) => (
         // Images are already resized and converted to WebP; preserve each banner's natural ratio.
         // eslint-disable-next-line @next/next/no-img-element
