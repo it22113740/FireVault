@@ -39,8 +39,13 @@ export default function HomePage() {
         <div className="absolute inset-0 -z-10 bg-linear-to-t from-background via-background/40 to-transparent" />
         <FadeIn className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-16 sm:py-24">
           <div className="flex flex-col gap-2">
-            <h1 className="bg-brand bg-clip-text text-5xl leading-none font-bold tracking-tight text-transparent sm:text-7xl">
-              Banzzz•23
+            <h1 className="flex flex-col gap-1">
+              <span className="bg-brand bg-clip-text text-5xl leading-none font-bold tracking-tight text-transparent sm:text-7xl">
+                Banzzz•23
+              </span>
+              <span className="font-heading text-2xl font-bold tracking-[0.2em] uppercase sm:text-4xl">
+                FF E Store
+              </span>
             </h1>
             <p className="font-heading text-2xl font-semibold sm:text-4xl">Free Fire Accounts Buy &amp; Sale</p>
             <p className="font-heading text-xl font-semibold text-muted-foreground sm:text-2xl">UID Top Up</p>
