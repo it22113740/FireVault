@@ -2,10 +2,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 // Mirrors ListingCard / TopupCard exactly (image, 2 text lines, price, button)
 // so nothing shifts when real content streams in.
-export function SkeletonCard() {
+// "portrait" matches listing images (3500 × 5200), "landscape" top-up cards
+export function SkeletonCard({ image = "portrait" }: { image?: "portrait" | "landscape" }) {
   return (
     <div className="flex flex-col overflow-hidden rounded-xl border bg-card">
-      <Skeleton className="aspect-[4/3] rounded-none" />
+      <Skeleton
+        className={image === "portrait" ? "aspect-[35/52] rounded-none" : "aspect-[4/3] rounded-none"}
+      />
       <div className="flex flex-1 flex-col gap-2 p-4">
         <Skeleton className="h-5 w-4/5" />
         <Skeleton className="h-4 w-1/2" />
@@ -16,11 +19,17 @@ export function SkeletonCard() {
   );
 }
 
-export function SkeletonGrid({ count = 12 }: { count?: number }) {
+export function SkeletonGrid({
+  count = 12,
+  image,
+}: {
+  count?: number;
+  image?: "portrait" | "landscape";
+}) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {Array.from({ length: count }, (_, index) => (
-        <SkeletonCard key={index} />
+        <SkeletonCard key={index} image={image} />
       ))}
     </div>
   );

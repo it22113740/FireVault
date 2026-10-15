@@ -14,7 +14,7 @@ type ImagePickerProps = {
   // Shown until a new file is picked (e.g. the listing's current image)
   currentUrl?: string;
   error?: string;
-  aspect?: "video" | "4/3" | "square" | "auto";
+  aspect?: "video" | "4/3" | "square" | "portrait" | "auto";
   label?: string;
 };
 
@@ -70,6 +70,7 @@ export function ImagePicker({
           aspect === "video" && "aspect-video",
           aspect === "4/3" && "aspect-[4/3]",
           aspect === "square" && "aspect-square",
+          aspect === "portrait" && "aspect-[35/52]",
           aspect === "auto" && "min-h-40 py-8"
         )}
       >

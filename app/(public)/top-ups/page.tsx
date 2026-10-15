@@ -31,7 +31,7 @@ export default function TopupsPage({ searchParams }: Props) {
         fallback={
           <div className="flex flex-col gap-6">
             <Skeleton className="h-11 w-80 max-w-full" />
-            <SkeletonGrid count={8} />
+            <SkeletonGrid count={8} image="landscape" />
           </div>
         }
       >

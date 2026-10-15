@@ -16,7 +16,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Textarea } from "@/components/ui/textarea";
 import { saveListing } from "@/lib/actions/listings";
 import { showActionError } from "@/lib/forms";
-import type { PublishStatus } from "@/lib/listings";
+import { LISTING_IMAGE_SIZE, type PublishStatus } from "@/lib/listings";
 import type { Role } from "@/lib/roles";
 import { formatPriceInput } from "@/lib/validations/common";
 import {
@@ -261,8 +261,13 @@ export function ListingForm({ role, regions, currency, listing }: ListingFormPro
           </div>
         </div>
 
-        <FormField label="Image" htmlFor="image">
+        <FormField
+          label="Image"
+          htmlFor="image"
+          hint={`Use a portrait ${LISTING_IMAGE_SIZE.width} × ${LISTING_IMAGE_SIZE.height} image so it fills the card.`}
+        >
           <ImagePicker
+            aspect="portrait"
             id="image"
             file={imageFile}
             currentUrl={imageUrl}

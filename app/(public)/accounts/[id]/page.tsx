@@ -68,7 +68,7 @@ async function AccountDetail({ params }: { params: Props["params"] }) {
         // Whole image at its own aspect ratio, never cropped; tap to zoom
         <ZoomableImage src={listing.imageUrl} alt={listing.title} dimmed={reserved} />
       ) : (
-        <div className="relative aspect-[4/3] rounded-2xl border bg-muted">
+        <div className="relative mx-auto aspect-[35/52] w-full max-w-[calc(80svh*35/52)] rounded-2xl border bg-muted">
           <Gamepad2Icon className="absolute inset-0 m-auto size-12 text-muted-foreground" />
         </div>
       )}

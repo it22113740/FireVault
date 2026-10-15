@@ -6,6 +6,7 @@ import { ZoomInIcon, ZoomOutIcon } from "lucide-react";
 import { FadeImage } from "@/components/fade-image";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { LISTING_IMAGE_SIZE } from "@/lib/listings";
 import { cn } from "@/lib/utils";
 
 const ZOOM = 2.5;
@@ -50,17 +51,17 @@ export function ZoomableImage({ src, alt, dimmed }: { src: string; alt: string; 
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="group relative block w-full cursor-zoom-in overflow-hidden rounded-2xl border bg-muted md:self-start"
+        // 3500 × 5200 frame, narrowed so its height stays within 80% of the screen
+        className="group relative mx-auto block aspect-[35/52] w-full max-w-[calc(80svh*35/52)] cursor-zoom-in overflow-hidden rounded-2xl border bg-muted md:self-start"
         aria-label={`Zoom image: ${alt}`}
       >
         <FadeImage
           src={src}
           alt={alt}
-          width={1600}
-          height={1200}
+          fill
           priority
           sizes="(min-width: 768px) 600px, 100vw"
-          className={cn("h-auto max-h-[75svh] w-full object-contain", dimmed && "opacity-70 grayscale")}
+          className={cn("object-contain", dimmed && "opacity-70 grayscale")}
         />
         <span className="absolute right-3 bottom-3 flex items-center gap-1.5 rounded-full bg-background/85 px-3 py-1.5 text-xs font-medium backdrop-blur transition-opacity md:opacity-0 md:group-hover:opacity-100">
           <ZoomInIcon className="size-3.5" /> Tap to zoom
@@ -82,8 +83,8 @@ export function ZoomableImage({ src, alt, dimmed }: { src: string; alt: string; 
                 ref={image}
                 src={src}
                 alt={alt}
-                width={1600}
-                height={1200}
+                width={LISTING_IMAGE_SIZE.width}
+                height={LISTING_IMAGE_SIZE.height}
                 sizes="100vw"
                 onClick={handleImageClick}
                 style={zoomWidth ? { width: zoomWidth, maxWidth: "none", maxHeight: "none" } : undefined}

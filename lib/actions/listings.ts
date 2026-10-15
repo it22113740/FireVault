@@ -7,7 +7,12 @@ import { logAudit, type AuditAction } from "@/lib/audit";
 import { requireStaff, requireSuperAdmin } from "@/lib/auth";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { toWebp } from "@/lib/images";
-import { salesAdminCanEdit, type Availability, type PublishStatus } from "@/lib/listings";
+import {
+  LISTING_IMAGE_SIZE,
+  salesAdminCanEdit,
+  type Availability,
+  type PublishStatus,
+} from "@/lib/listings";
 import { PUBLIC_IMAGES_BUCKET, publicImageUrl } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import { parsePrice, uuidSchema } from "@/lib/validations/common";
@@ -88,7 +93,8 @@ export async function saveListing(formData: FormData): Promise<ActionResult<Save
   let uploadedPath: string | null = null;
   const file = formData.get("image");
   if (file instanceof File && file.size > 0) {
-    const image = await toWebp(file, { folder: "listings" });
+    // Half of 3500 × 5200, so stored images keep the listing ratio exactly
+    const image = await toWebp(file, { folder: "listings", maxWidth: LISTING_IMAGE_SIZE.width / 2 });
     if ("error" in image) return { ok: false, error: image.error, fieldErrors: { image: [image.error] } };
     const { error } = await supabase.storage
       .from(PUBLIC_IMAGES_BUCKET)

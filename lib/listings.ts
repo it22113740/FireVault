@@ -24,3 +24,8 @@ export function salesAdminCanEdit(status: PublishStatus) {
 export function canToggleAvailability(status: PublishStatus, isSuperAdmin: boolean) {
   return isSuperAdmin || salesAdminCanEdit(status);
 }
+
+// Listing images are portrait 3500 × 5200. Every frame that shows one uses the
+// matching Tailwind class `aspect-[35/52]` (class names must be literal) with
+// object-contain, so an image of another shape is shown whole, never cropped.
+export const LISTING_IMAGE_SIZE = { width: 3500, height: 5200 } as const;

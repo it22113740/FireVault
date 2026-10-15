@@ -28,7 +28,8 @@ export function ListingCard({
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       )}
     >
-      <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+      {/* 3500 × 5200 portrait (LISTING_IMAGE_SIZE) */}
+      <div className="relative aspect-[35/52] overflow-hidden bg-muted">
         {listing.imageUrl ? (
           <Image
             src={listing.imageUrl}
@@ -36,7 +37,7 @@ export function ListingCard({
             fill
             priority={priority}
             sizes="(min-width: 1280px) 280px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-            className={cn("object-cover", reserved && "opacity-60 grayscale")}
+            className={cn("object-contain", reserved && "opacity-60 grayscale")}
           />
         ) : (
           <Gamepad2Icon className="absolute inset-0 m-auto size-10 text-muted-foreground" />

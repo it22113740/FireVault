@@ -111,9 +111,9 @@ export function ReviewQueue({ items, currency }: { items: ReviewItem[]; currency
                   selected && "border-primary/60 ring-1 ring-primary/30"
                 )}
               >
-                <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-muted">
+                <div className="relative aspect-[35/52] overflow-hidden rounded-lg bg-muted">
                   {item.imageUrl && (
-                    <Image src={item.imageUrl} alt={item.title} fill sizes="192px" className="object-cover" />
+                    <Image src={item.imageUrl} alt={item.title} fill sizes="192px" className="object-contain" />
                   )}
                 </div>
                 <div className="flex min-w-0 flex-col gap-3">
