@@ -9,6 +9,7 @@ import { FormField } from "@/components/form-field";
 import { SubmitButton } from "@/components/submit-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { login } from "@/lib/actions/auth";
 import { showActionError } from "@/lib/forms";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
@@ -56,9 +57,8 @@ export function LoginForm() {
         />
       </FormField>
       <FormField label="Password" htmlFor="password" error={errors.password?.message}>
-        <Input
+        <PasswordInput
           id="password"
-          type="password"
           autoComplete="current-password"
           className="h-11"
           aria-invalid={!!errors.password}

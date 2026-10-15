@@ -10,6 +10,7 @@ import { FormField } from "@/components/form-field";
 import { SubmitButton } from "@/components/submit-button";
 import { Turnstile, turnstileEnabled } from "@/components/turnstile";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { signup } from "@/lib/actions/auth";
 import { showActionError } from "@/lib/forms";
 import { safeNextPath, signupSchema, type SignupInput } from "@/lib/validations/auth";
@@ -81,9 +82,8 @@ export function SignupForm() {
         />
       </FormField>
       <FormField label="Password" htmlFor="password" hint="At least 8 characters." error={errors.password?.message}>
-        <Input
+        <PasswordInput
           id="password"
-          type="password"
           autoComplete="new-password"
           className="h-11"
           aria-invalid={!!errors.password}
@@ -91,9 +91,8 @@ export function SignupForm() {
         />
       </FormField>
       <FormField label="Confirm password" htmlFor="confirmPassword" error={errors.confirmPassword?.message}>
-        <Input
+        <PasswordInput
           id="confirmPassword"
-          type="password"
           autoComplete="new-password"
           className="h-11"
           aria-invalid={!!errors.confirmPassword}

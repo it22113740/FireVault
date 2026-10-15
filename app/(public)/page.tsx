@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRightIcon,
@@ -17,6 +16,7 @@ import { SkeletonCard } from "@/components/skeletons";
 import { Button } from "@/components/ui/button";
 import { getSettings } from "@/lib/settings";
 import { getLatestListings } from "@/lib/store";
+import { HeroBackground } from "./hero-background";
 import { TOPUP_CATEGORIES, type TopupCategory } from "@/lib/topups";
 
 const CATEGORY_DETAILS: Record<TopupCategory, { text: string; icon: LucideIcon }> = {
@@ -28,25 +28,11 @@ const CATEGORY_DETAILS: Record<TopupCategory, { text: string; icon: LucideIcon }
 export default function HomePage() {
   return (
     <>
-      {/* At least as tall as the 16:9 banner, so the whole image shows behind
-          the text. Where the text needs more height (phones), a blurred copy
-          of the banner fills the space around it instead of empty bars. */}
-      <section className="relative isolate flex min-h-[56.25vw] items-center overflow-hidden border-b">
-        <Image
-          src="/hero.jpg"
-          alt=""
-          fill
-          sizes="100vw"
-          className="-z-20 scale-110 object-cover opacity-30 blur-2xl"
-        />
-        <Image
-          src="/hero.jpg"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="-z-10 object-contain opacity-60"
-        />
+      {/* At least as tall as the banner (portrait 940 × 1672 on phones,
+          landscape 1672 × 941 from md), so the whole image shows behind the
+          text. Any extra height is filled by a blurred copy, not empty bars. */}
+      <section className="relative isolate flex min-h-[177.87vw] items-center overflow-hidden border-b md:min-h-[56.28vw]">
+        <HeroBackground />
         <div className="absolute inset-0 -z-10 bg-linear-to-t from-background via-background/40 to-transparent" />
         <FadeIn className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-16 sm:py-24">
           <div className="flex flex-col gap-2">

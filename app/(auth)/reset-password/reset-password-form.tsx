@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { FormField } from "@/components/form-field";
 import { SubmitButton } from "@/components/submit-button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { setNewPassword } from "@/lib/actions/auth";
 import { showActionError } from "@/lib/forms";
 import { newPasswordSchema, type NewPasswordInput } from "@/lib/validations/auth";
@@ -34,9 +34,8 @@ export function ResetPasswordForm() {
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
       <FormField label="New password" htmlFor="password" error={errors.password?.message}>
-        <Input
+        <PasswordInput
           id="password"
-          type="password"
           autoComplete="new-password"
           className="h-11"
           aria-invalid={!!errors.password}
@@ -48,9 +47,8 @@ export function ResetPasswordForm() {
         htmlFor="confirmPassword"
         error={errors.confirmPassword?.message}
       >
-        <Input
+        <PasswordInput
           id="confirmPassword"
-          type="password"
           autoComplete="new-password"
           className="h-11"
           aria-invalid={!!errors.confirmPassword}
