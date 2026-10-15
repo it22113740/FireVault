@@ -87,19 +87,19 @@ export function SellerCta() {
             <span className="flex size-14 items-center justify-center rounded-2xl bg-brand text-primary-foreground shadow-lg shadow-primary/30 motion-safe:group-hover:animate-jiggle">
               <StoreIcon className="size-7" />
             </span>
-            <p className="font-accent text-sm font-semibold tracking-[0.2em] text-primary uppercase">
+            <p className="text-sm font-semibold tracking-[0.2em] text-primary uppercase">
               For sellers
             </p>
             <h2 className="text-3xl leading-tight font-bold tracking-tight text-balance sm:text-5xl">
               Turn your game accounts into{" "}
               <span className="bg-brand bg-clip-text text-transparent">real cash</span>
             </h2>
-            <p className="max-w-xl font-accent text-lg font-medium text-muted-foreground sm:text-xl">
+            <p className="max-w-xl text-lg font-medium text-muted-foreground sm:text-xl">
               Join Banzzz•23 FF E Store as a seller. Get your own shop page, list accounts in minutes
               and close deals with buyers directly on WhatsApp.
             </p>
 
-            <ol className="flex flex-wrap items-center gap-2 font-accent font-semibold">
+            <ol className="flex flex-wrap items-center gap-2 font-semibold">
               {STEPS.map((step, index) => (
                 <li key={step} className="flex items-center gap-2">
                   <span className="flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-sm">
@@ -142,7 +142,7 @@ export function SellerCta() {
               >
                 <Icon className="size-6 text-primary" />
                 <h3 className="font-heading font-semibold">{title}</h3>
-                <p className="font-accent text-base font-medium text-muted-foreground">{text}</p>
+                <p className="text-base font-medium text-muted-foreground">{text}</p>
               </li>
             ))}
           </ul>

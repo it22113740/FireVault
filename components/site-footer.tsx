@@ -6,7 +6,7 @@ const LINKS = [...PUBLIC_NAV, SELLER_CTA, { href: "/login", label: "Seller login
 
 export function SiteFooter() {
   return (
-    <footer className="border-t font-accent font-medium">
+    <footer className="border-t font-medium">
       <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:flex-row sm:justify-between">
         <div className="max-w-xs">
           <Logo />
