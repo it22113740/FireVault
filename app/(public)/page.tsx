@@ -12,12 +12,15 @@ import {
 import { ListingCard } from "@/components/listing-card";
 import { ListingCarousel } from "@/components/listing-carousel";
 import { FadeIn } from "@/components/motion";
+import { SellerMarquee } from "@/components/seller-marquee";
 import { SkeletonCard } from "@/components/skeletons";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getSellers } from "@/lib/sellers";
 import { getSettings } from "@/lib/settings";
 import { getLatestListingPerSeller } from "@/lib/store";
-import { HeroBackground } from "./hero-background";
 import { TOPUP_CATEGORIES, type TopupCategory } from "@/lib/topups";
+import { HeroBackground } from "./hero-background";
 
 const CATEGORY_DETAILS: Record<TopupCategory, { text: string; icon: LucideIcon }> = {
   membership: { text: "Weekly and monthly passes", icon: CrownIcon },
@@ -76,6 +79,10 @@ export default function HomePage() {
           <LatestAccounts />
         </Suspense>
       </section>
+
+      <Suspense fallback={<TopSellersSkeleton />}>
+        <TopSellers />
+      </Suspense>
 
       <section className="mx-auto flex max-w-6xl flex-col gap-5 px-4 pb-12">
         <h2 className="text-2xl font-bold sm:text-3xl">Top-ups</h2>
@@ -148,6 +155,38 @@ function LatestSkeleton() {
         <div key={index} className="w-[82%] shrink-0 sm:w-1/2 lg:w-1/3 xl:w-1/4">
           <SkeletonCard />
         </div>
+      ))}
+    </div>
+  );
+}
+
+// Seller cards with their ratings, scrolling in an endless loop
+async function TopSellers() {
+  const sellers = await getSellers();
+  if (sellers.length === 0) return null;
+
+  return (
+    <section className="flex flex-col gap-5 pb-12">
+      <div className="mx-auto flex w-full max-w-6xl items-end justify-between gap-4 px-4">
+        <div>
+          <h2 className="text-2xl font-bold sm:text-3xl">Top sellers</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Rated and reviewed by customers.</p>
+        </div>
+        <Link href="/sellers" className="flex min-h-11 items-center gap-1 text-sm text-primary hover:underline">
+          All sellers <ArrowRightIcon className="size-4" />
+        </Link>
+      </div>
+      {/* Best rated first; the strip shows the top 20 */}
+      <SellerMarquee sellers={sellers.slice(0, 20)} />
+    </section>
+  );
+}
+
+function TopSellersSkeleton() {
+  return (
+    <div className="mx-auto flex max-w-6xl gap-4 overflow-hidden px-4 pb-12">
+      {Array.from({ length: 4 }, (_, index) => (
+        <Skeleton key={index} className="h-[5.375rem] w-72 shrink-0 rounded-xl" />
       ))}
     </div>
   );

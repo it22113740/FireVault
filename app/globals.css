@@ -47,6 +47,13 @@
     from { transform: translateX(-100%); }
     to { transform: translateX(100%); }
   }
+
+  /* Endless strip: the track holds the items twice and slides by half */
+  --animate-marquee: marquee var(--marquee-duration, 40s) linear infinite;
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
 }
 
 :root {
