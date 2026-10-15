@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MailCheckIcon } from "lucide-react";
+import { ArrowRightIcon, MailCheckIcon, StoreIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { FormField } from "@/components/form-field";
 import { SubmitButton } from "@/components/submit-button";
@@ -118,12 +118,19 @@ export function SignupForm() {
           Log in
         </Link>
       </p>
-      <p className="text-center text-xs text-muted-foreground">
-        Selling accounts?{" "}
-        <Link href="/apply" className="hover:text-foreground hover:underline">
-          Apply to become a seller
+      <div className="mt-2 border-t border-border/70 pt-5">
+        <Link
+          href="/apply"
+          className="flex items-center gap-3 rounded-xl border border-primary/40 bg-primary/10 p-4 transition-colors hover:border-primary hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          <StoreIcon className="size-6 shrink-0 text-primary" aria-hidden="true" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-xs text-muted-foreground">Selling accounts?</span>
+            <span className="block text-base font-bold text-primary">Apply to become a seller</span>
+          </span>
+          <ArrowRightIcon className="size-5 shrink-0 text-primary" aria-hidden="true" />
         </Link>
-      </p>
+      </div>
     </form>
   );
 }
