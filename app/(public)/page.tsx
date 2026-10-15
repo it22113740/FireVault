@@ -28,20 +28,27 @@ const CATEGORY_DETAILS: Record<TopupCategory, { text: string; icon: LucideIcon }
 export default function HomePage() {
   return (
     <>
-      <section className="border-b">
-        {/* Whole 16:9 banner (1024 × 576), never cropped */}
-        <div className="mx-auto max-w-6xl sm:px-4 sm:pt-6">
-          <Image
-            src="/hero.jpg"
-            alt="Banzzz•23 banner"
-            width={1024}
-            height={576}
-            priority
-            sizes="(min-width: 1152px) 1120px, 100vw"
-            className="h-auto w-full sm:rounded-2xl sm:border"
-          />
-        </div>
-        <FadeIn className="mx-auto flex max-w-6xl flex-col gap-5 px-4 py-10 sm:py-14">
+      {/* At least as tall as the 16:9 banner, so the whole image shows behind
+          the text. Where the text needs more height (phones), a blurred copy
+          of the banner fills the space around it instead of empty bars. */}
+      <section className="relative isolate flex min-h-[56.25vw] items-center overflow-hidden border-b">
+        <Image
+          src="/hero.jpg"
+          alt=""
+          fill
+          sizes="100vw"
+          className="-z-20 scale-110 object-cover opacity-30 blur-2xl"
+        />
+        <Image
+          src="/hero.jpg"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="-z-10 object-contain opacity-60"
+        />
+        <div className="absolute inset-0 -z-10 bg-linear-to-t from-background via-background/40 to-transparent" />
+        <FadeIn className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-16 sm:py-24">
           <div className="flex flex-col gap-2">
             <h1 className="bg-brand bg-clip-text text-5xl leading-none font-bold tracking-tight text-transparent sm:text-7xl">
               Banzzz•23
