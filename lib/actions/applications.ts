@@ -12,13 +12,13 @@ import { toWebp } from "@/lib/images";
 import { accessExpiryFromNow } from "@/lib/sales-admin-access";
 import { APPLICATIONS_BUCKET } from "@/lib/storage";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { SITE_URL } from "@/lib/site";
 import { createClient } from "@/lib/supabase/server";
 import { verifyTurnstile } from "@/lib/turnstile";
 import { applicationSchema, denyApplicationSchema } from "@/lib/validations/application";
 import { uuidSchema } from "@/lib/validations/common";
 
 const RATE_LIMIT_PER_HOUR = 5;
-const siteUrl = () => process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 async function clientIp() {
   const forwarded = (await headers()).get("x-forwarded-for");
@@ -164,7 +164,7 @@ export async function approveApplication(id: string): Promise<ActionResult> {
 
     // Step 3: reset email so they choose their own password
     const { error: emailError } = await admin.auth.resetPasswordForEmail(application.email, {
-      redirectTo: `${siteUrl()}/auth/confirm?next=/reset-password`,
+      redirectTo: `${SITE_URL}/auth/confirm?next=/reset-password`,
     });
     if (emailError) throw new Error(emailError.message);
 

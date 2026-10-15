@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Oxanium } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "sonner";
+import { SITE_URL } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 
@@ -9,7 +10,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const oxanium = Oxanium({ subsets: ["latin"], variable: "--font-oxanium" });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "FireVault · Game accounts & top-ups",
     template: "%s · FireVault",

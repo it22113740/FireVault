@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { fail, invalid, ok, type ActionResult } from "@/lib/actions/result";
 import { hasActiveAccess } from "@/lib/sales-admin-access";
+import { SITE_URL } from "@/lib/site";
 import { createClient } from "@/lib/supabase/server";
 import {
   forgotPasswordSchema,
@@ -13,7 +14,6 @@ import {
   type NewPasswordInput,
 } from "@/lib/validations/auth";
 
-const siteUrl = () => process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 export async function login(input: LoginInput): Promise<ActionResult> {
   const parsed = loginSchema.safeParse(input);
@@ -53,7 +53,7 @@ export async function requestPasswordReset(input: ForgotPasswordInput): Promise<
 
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-    redirectTo: `${siteUrl()}/auth/confirm?next=/reset-password`,
+    redirectTo: `${SITE_URL}/auth/confirm?next=/reset-password`,
   });
   // Only rate limiting is worth reporting; never reveal whether the email exists
   if (error?.status === 429) {
