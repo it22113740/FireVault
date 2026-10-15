@@ -15,7 +15,7 @@ import { FadeIn } from "@/components/motion";
 import { SkeletonCard } from "@/components/skeletons";
 import { Button } from "@/components/ui/button";
 import { getSettings } from "@/lib/settings";
-import { getLatestListings } from "@/lib/store";
+import { getLatestListingPerSeller } from "@/lib/store";
 import { HeroBackground } from "./hero-background";
 import { TOPUP_CATEGORIES, type TopupCategory } from "@/lib/topups";
 
@@ -64,7 +64,10 @@ export default function HomePage() {
 
       <section className="mx-auto flex max-w-6xl flex-col gap-5 px-4 py-12">
         <div className="flex items-end justify-between gap-4">
-          <h2 className="text-2xl font-bold sm:text-3xl">Latest accounts</h2>
+          <div>
+            <h2 className="text-2xl font-bold sm:text-3xl">Latest accounts</h2>
+            <p className="mt-1 text-sm text-muted-foreground">The newest account from each seller.</p>
+          </div>
           <Link href="/accounts" className="flex min-h-11 items-center gap-1 text-sm text-primary hover:underline">
             View all <ArrowRightIcon className="size-4" />
           </Link>
@@ -120,7 +123,7 @@ export default function HomePage() {
 }
 
 async function LatestAccounts() {
-  const [listings, settings] = await Promise.all([getLatestListings(8), getSettings()]);
+  const [listings, settings] = await Promise.all([getLatestListingPerSeller(), getSettings()]);
 
   if (listings.length === 0) {
     return (

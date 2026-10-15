@@ -1,4 +1,4 @@
-// Mirrors supabase/migrations/ (through 20261019000000_listing_exchange.sql) in the format
+// Mirrors supabase/migrations/ (through 20261020000000_latest_listing_per_seller.sql) in the format
 // produced by `supabase gen types typescript`. After applying migrations,
 // regenerate with:
 //   npx supabase gen types typescript --linked > lib/database.types.ts
@@ -403,6 +403,11 @@ export type Database = {
       };
     };
     Views: {
+      // Same columns as published_listings: each seller's newest available one
+      latest_listing_per_seller: {
+        Row: Database["public"]["Views"]["published_listings"]["Row"];
+        Relationships: [];
+      };
       published_listings: {
         Row: {
           availability: Database["public"]["Enums"]["availability"] | null;

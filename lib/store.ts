@@ -137,20 +137,21 @@ async function getPublishedListingsCached(filters: ListingFilters) {
   return { listings: (data ?? []).map(toPublicListing), total: count ?? 0 };
 }
 
-export async function getLatestListings(limit = 8) {
+// Home page: every seller's newest available account, newest first (the
+// super admin's own listings count as one seller)
+export async function getLatestListingPerSeller(limit = 24) {
   await connection();
-  return getLatestListingsCached(limit);
+  return getLatestListingPerSellerCached(limit);
 }
 
-async function getLatestListingsCached(limit: number) {
+async function getLatestListingPerSellerCached(limit: number) {
   "use cache";
   cacheTag(CACHE_TAGS.listings);
   cacheLife("hours");
 
   const { data, error } = await createPublicClient()
-    .from("published_listings")
+    .from("latest_listing_per_seller")
     .select("*")
-    .eq("availability", "available")
     .order("published_at", { ascending: false })
     .limit(limit);
   if (error) throw new Error(`Failed to load listings: ${error.message}`);
