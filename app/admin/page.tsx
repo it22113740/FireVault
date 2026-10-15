@@ -4,6 +4,8 @@ import { TriangleAlertIcon } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireStaff, type Profile } from "@/lib/auth";
+import { formatDate } from "@/lib/format";
+import { accessDaysLeft } from "@/lib/sales-admin-access";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
@@ -74,6 +76,7 @@ async function SalesAdminStats({ profile }: { profile: Profile }) {
 
   return (
     <>
+      {profile.active_until && <AccessNotice activeUntil={profile.active_until} />}
       {!profile.whatsapp_number && (
         <Link
           href="/admin/profile"
@@ -92,6 +95,23 @@ async function SalesAdminStats({ profile }: { profile: Profile }) {
         ]}
       />
     </>
+  );
+}
+
+// Sellers see when their month of access ends; highlighted in the last 5 days
+function AccessNotice({ activeUntil }: { activeUntil: string }) {
+  const daysLeft = accessDaysLeft(activeUntil);
+  const soon = daysLeft <= 5;
+  return (
+    <p
+      className={cn(
+        "rounded-xl border p-4 text-sm",
+        soon ? "border-warning/40 bg-warning/10" : "bg-card text-muted-foreground"
+      )}
+    >
+      Your seller access is active until <span className="font-medium text-foreground">{formatDate(activeUntil)}</span>
+      {soon && ` (${daysLeft} ${daysLeft === 1 ? "day" : "days"} left). Contact the administrator to renew it.`}
+    </p>
   );
 }
 

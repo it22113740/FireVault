@@ -8,6 +8,7 @@ import { SkeletonTableRows } from "@/components/skeletons";
 import { Button } from "@/components/ui/button";
 import { requireSuperAdmin } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
+import { hasActiveAccess } from "@/lib/sales-admin-access";
 import { createClient } from "@/lib/supabase/server";
 import { whatsappUrl } from "@/lib/whatsapp";
 import { ActiveSwitch } from "./active-switch";
@@ -19,7 +20,7 @@ export default function SalesAdminsPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Sales admins"
-        description="Inactive sellers can't log in. Their live listings stay up."
+        description="Each activation gives one month of access. After that, sellers are inactive until you switch them on again. Their live listings stay up."
       />
       <Suspense fallback={<SkeletonTableRows rows={5} />}>
         <SalesAdmins />
@@ -34,7 +35,7 @@ async function SalesAdmins() {
   const { data } = await supabase
     .from("profiles")
     .select(
-      "id, full_name, email, whatsapp_number, contact_number, is_active, created_at, listings!listings_created_by_fkey(count)"
+      "id, role, full_name, email, whatsapp_number, contact_number, is_active, active_until, created_at, listings!listings_created_by_fkey(count)"
     )
     .eq("role", "sales_admin")
     .order("created_at", { ascending: false });
@@ -88,9 +89,21 @@ async function SalesAdmins() {
             </span>{" "}
             listings · since {formatDate(seller.created_at)}
           </div>
-          <ActiveSwitch id={seller.id} name={seller.full_name} active={seller.is_active} />
+          <ActiveSwitch
+            id={seller.id}
+            name={seller.full_name}
+            active={hasActiveAccess(seller)}
+            status={accessStatus(seller)}
+          />
         </li>
       ))}
     </ul>
   );
+}
+
+function accessStatus(seller: { is_active: boolean; active_until: string | null }) {
+  if (!seller.is_active) return "Deactivated";
+  if (!seller.active_until) return "No access period";
+  const until = formatDate(seller.active_until);
+  return new Date(seller.active_until) > new Date() ? `Until ${until}` : `Expired ${until}`;
 }

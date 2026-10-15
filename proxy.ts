@@ -2,8 +2,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "@/lib/database.types";
 import { isSuperAdminOnlyPath } from "@/lib/roles";
+import { hasActiveAccess } from "@/lib/sales-admin-access";
 
-// Auth + role + is_active gate (PLAN.md "Inactive sales admins"). Runs on
+// Auth + role + active-access gate (PLAN.md "Inactive sales admins"). Runs on
 // every /admin request, so deactivating someone takes effect on their next
 // click. Pages and actions re-check with requireRole().
 export async function proxy(request: NextRequest) {
@@ -33,10 +34,11 @@ export async function proxy(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const userId = data?.claims.sub;
   const { data: profile } = userId
-    ? await supabase.from("profiles").select("role, is_active").eq("id", userId).maybeSingle()
+    ? await supabase.from("profiles").select("role, is_active, active_until").eq("id", userId).maybeSingle()
     : { data: null };
 
-  const inactive = profile?.role === "sales_admin" && !profile.is_active;
+  // Deactivated, or their month of access has run out
+  const inactive = !!profile && !hasActiveAccess(profile);
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith("/admin")) {

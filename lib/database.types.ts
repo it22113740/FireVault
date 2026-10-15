@@ -1,4 +1,4 @@
-// Mirrors supabase/migrations/20261015000000_store_schema.sql in the format
+// Mirrors supabase/migrations/ (through 20261016000000_sales_admin_expiry.sql) in the format
 // produced by `supabase gen types typescript`. After applying migrations,
 // regenerate with:
 //   npx supabase gen types typescript --linked > lib/database.types.ts
@@ -144,6 +144,7 @@ export type Database = {
       };
       profiles: {
         Row: {
+          active_until: string | null;
           contact_number: string | null;
           created_at: string;
           email: string;
@@ -154,6 +155,7 @@ export type Database = {
           whatsapp_number: string | null;
         };
         Insert: {
+          active_until?: string | null;
           contact_number?: string | null;
           created_at?: string;
           email: string;
@@ -164,6 +166,7 @@ export type Database = {
           whatsapp_number?: string | null;
         };
         Update: {
+          active_until?: string | null;
           contact_number?: string | null;
           created_at?: string;
           email?: string;

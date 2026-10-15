@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { fail, invalid, ok, type ActionResult } from "@/lib/actions/result";
+import { hasActiveAccess } from "@/lib/sales-admin-access";
 import { createClient } from "@/lib/supabase/server";
 import {
   forgotPasswordSchema,
@@ -24,7 +25,7 @@ export async function login(input: LoginInput): Promise<ActionResult> {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, is_active")
+    .select("role, is_active, active_until")
     .eq("id", data.user.id)
     .maybeSingle();
 
@@ -32,7 +33,7 @@ export async function login(input: LoginInput): Promise<ActionResult> {
     await supabase.auth.signOut();
     return fail("This account doesn't have dashboard access.");
   }
-  if (profile.role === "sales_admin" && !profile.is_active) {
+  if (!hasActiveAccess(profile)) {
     await supabase.auth.signOut();
     redirect("/inactive");
   }

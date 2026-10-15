@@ -3,6 +3,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import type { Tables } from "@/lib/database.types";
 import type { Role } from "@/lib/roles";
+import { hasActiveAccess } from "@/lib/sales-admin-access";
 import { createClient } from "@/lib/supabase/server";
 
 export type Profile = Tables<"profiles">;
@@ -23,11 +24,11 @@ export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
 });
 
 // Guard for admin pages and every Server Action. proxy.ts is only the first
-// line of defence; this re-checks role and is_active on the server.
+// line of defence; this re-checks role and active access on the server.
 export async function requireRole(...roles: Role[]): Promise<Profile> {
   const profile = await getCurrentProfile();
   if (!profile) redirect("/login");
-  if (profile.role === "sales_admin" && !profile.is_active) redirect("/inactive");
+  if (!hasActiveAccess(profile)) redirect("/inactive");
   if (roles.length > 0 && !roles.includes(profile.role)) redirect("/admin");
   return profile;
 }

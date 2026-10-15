@@ -9,6 +9,7 @@ import { logAudit } from "@/lib/audit";
 import { requireSuperAdmin } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
 import { toWebp } from "@/lib/images";
+import { accessExpiryFromNow } from "@/lib/sales-admin-access";
 import { APPLICATIONS_BUCKET } from "@/lib/storage";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -157,6 +158,7 @@ export async function approveApplication(id: string): Promise<ActionResult> {
       whatsapp_number: application.whatsapp_number,
       contact_number: application.contact_number,
       is_active: true,
+      active_until: accessExpiryFromNow(),
     });
     if (profileError) throw new Error(profileError.message);
 
