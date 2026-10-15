@@ -32,7 +32,7 @@ export function SellerCta() {
         <div className="flex shrink-0 flex-col items-center gap-2 sm:items-start lg:items-center">
           <Button
             size="lg"
-            className="h-14 w-full bg-brand px-8 text-base font-bold shadow-lg shadow-primary/20 hover:brightness-110 sm:w-auto"
+            className="h-14 w-full bg-brand px-8 text-xl font-bold shadow-lg shadow-primary/20 hover:brightness-110 sm:w-auto"
             render={<Link href="/apply" />}
             nativeButton={false}
           >
