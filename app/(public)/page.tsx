@@ -8,9 +8,9 @@ import {
   SparklesIcon,
   type LucideIcon,
 } from "lucide-react";
+import { Magnetic, Reveal } from "@/components/interactive";
 import { ListingCard } from "@/components/listing-card";
 import { ListingCarousel } from "@/components/listing-carousel";
-import { FadeIn } from "@/components/motion";
 import { SellerCta } from "@/components/seller-cta";
 import { SellerMarquee } from "@/components/seller-marquee";
 import { SkeletonCard } from "@/components/skeletons";
@@ -38,8 +38,9 @@ export default function HomePage() {
       <section className="relative isolate flex min-h-[177.87vw] items-center overflow-hidden border-b md:min-h-[56.28vw]">
         <HeroBackground />
         <div className="absolute inset-0 -z-10 bg-linear-to-t from-background via-background/40 to-transparent" />
-        <FadeIn className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-16 sm:py-24">
-          <div className="flex flex-col gap-2">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-16 sm:py-24">
+          {/* Lines appear one after another */}
+          <Reveal className="flex flex-col gap-2">
             <h1 className="flex flex-col gap-1">
               <span className="bg-brand bg-clip-text text-5xl leading-none font-bold tracking-tight text-transparent sm:text-7xl">
                 Banzzz•23
@@ -50,32 +51,36 @@ export default function HomePage() {
             </h1>
             <p className="font-heading text-2xl font-semibold sm:text-4xl">Free Fire Accounts Buy &amp; Sale</p>
             <p className="font-heading text-xl font-semibold text-muted-foreground sm:text-2xl">UID Top Up</p>
-          </div>
-          <p className="max-w-xl text-lg font-medium text-muted-foreground sm:text-xl">
-            Browse ready-to-play accounts by region and price. Tap Buy on WhatsApp, pay the seller
-            and get your login.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <Button
-              size="lg"
-              className="h-11 bg-brand px-5 font-semibold text-primary-foreground"
-              render={<Link href="/accounts" />}
-              nativeButton={false}
-            >
-              Browse accounts <ArrowRightIcon />
-            </Button>
+          </Reveal>
+          <Reveal delay={0.12}>
+            <p className="max-w-xl text-lg font-medium text-muted-foreground sm:text-xl">
+              Browse ready-to-play accounts by region and price. Tap Buy on WhatsApp, pay the seller
+              and get your login.
+            </p>
+          </Reveal>
+          <Reveal delay={0.24} className="flex flex-wrap gap-3">
+            <Magnetic>
+              <Button
+                size="lg"
+                className="h-11 bg-brand px-5 font-semibold text-primary-foreground shadow-lg shadow-primary/25"
+                render={<Link href="/accounts" />}
+                nativeButton={false}
+              >
+                Browse accounts <ArrowRightIcon className="transition-transform group-hover/button:translate-x-1" />
+              </Button>
+            </Magnetic>
             <Suspense fallback={<Skeleton className="h-11 w-52" />}>
               <HeroWhatsApp />
             </Suspense>
             <Button size="lg" variant="outline" className="h-11 px-5" render={<Link href="/how-to-buy" />} nativeButton={false}>
               <BookOpenIcon /> How buying works
             </Button>
-          </div>
-        </FadeIn>
+          </Reveal>
+        </div>
       </section>
 
       <section className="mx-auto flex max-w-6xl flex-col gap-5 px-4 py-12">
-        <div className="flex items-end justify-between gap-4">
+        <Reveal className="flex items-end justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold sm:text-3xl">Latest accounts</h2>
             <p className="mt-1 text-base font-medium text-muted-foreground">The newest account from each seller.</p>
@@ -83,9 +88,11 @@ export default function HomePage() {
           <Link href="/accounts" className="flex min-h-11 items-center gap-1 text-sm text-primary hover:underline">
             View all <ArrowRightIcon className="size-4" />
           </Link>
-        </div>
+        </Reveal>
         <Suspense fallback={<LatestSkeleton />}>
-          <LatestAccounts />
+          <Reveal delay={0.1}>
+            <LatestAccounts />
+          </Reveal>
         </Suspense>
       </section>
 
@@ -94,17 +101,19 @@ export default function HomePage() {
       </Suspense>
 
       <section className="mx-auto flex max-w-6xl flex-col gap-5 px-4 pb-12">
-        <h2 className="text-2xl font-bold sm:text-3xl">Top-ups</h2>
+        <Reveal>
+          <h2 className="text-2xl font-bold sm:text-3xl">Top-ups</h2>
+        </Reveal>
         <ul className="grid gap-3 sm:grid-cols-3">
-          {TOPUP_CATEGORIES.map(({ value, label }) => {
+          {TOPUP_CATEGORIES.map(({ value, label }, index) => {
             const { text, icon: Icon } = CATEGORY_DETAILS[value];
             return (
-              <li key={value}>
+              <Reveal as="li" key={value} delay={index * 0.08} className="h-full">
                 <Link
                   href={`/top-ups?category=${value}`}
-                  className="flex h-full items-center gap-4 rounded-xl border bg-card p-5 transition duration-200 hover:border-primary/50 md:hover:-translate-y-1"
+                  className="group flex h-full items-center gap-4 rounded-xl border bg-card p-5 transition duration-200 hover:border-primary/50 active:scale-[0.98] md:hover:-translate-y-1"
                 >
-                  <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/15">
+                  <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/15 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110">
                     <Icon className="size-6 text-primary" />
                   </span>
                   <span>
@@ -112,14 +121,16 @@ export default function HomePage() {
                     <span className="text-sm text-muted-foreground">{text}</span>
                   </span>
                 </Link>
-              </li>
+              </Reveal>
             );
           })}
         </ul>
       </section>
 
       <section className="mx-auto max-w-6xl px-4 pb-16">
-        <SellerCta />
+        <Reveal>
+          <SellerCta />
+        </Reveal>
       </section>
     </>
   );
@@ -179,7 +190,7 @@ async function TopSellers() {
 
   return (
     <section className="flex flex-col gap-5 pb-12">
-      <div className="mx-auto flex w-full max-w-6xl items-end justify-between gap-4 px-4">
+      <Reveal className="mx-auto flex w-full max-w-6xl items-end justify-between gap-4 px-4">
         <div>
           <h2 className="text-2xl font-bold sm:text-3xl">Top sellers</h2>
           <p className="mt-1 text-base font-medium text-muted-foreground">Rated and reviewed by customers.</p>
@@ -187,7 +198,7 @@ async function TopSellers() {
         <Link href="/sellers" className="flex min-h-11 items-center gap-1 text-sm text-primary hover:underline">
           All sellers <ArrowRightIcon className="size-4" />
         </Link>
-      </div>
+      </Reveal>
       {/* Best rated first; the strip shows the top 20 */}
       <SellerMarquee sellers={sellers.slice(0, 20)} />
     </section>

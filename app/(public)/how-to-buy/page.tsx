@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BadgeCheckIcon, MessageCircleIcon, MousePointerClickIcon } from "lucide-react";
+import { Reveal } from "@/components/interactive";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
@@ -32,13 +33,18 @@ export default function HowToBuyPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">How to buy</h1>
         <p className="mt-2 text-muted-foreground">
-          No account or checkout needed. Everything happens in a WhatsApp chat.
+          No checkout or online payment. You chat with the seller on WhatsApp and pay them directly.
         </p>
       </div>
       <ol className="flex flex-col gap-4">
         {STEPS.map(({ icon: Icon, title, text }, index) => (
-          <li key={title} className="flex gap-4 rounded-xl border bg-card p-5">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/15">
+          <Reveal
+            as="li"
+            key={title}
+            delay={index * 0.12}
+            className="group flex gap-4 rounded-xl border bg-card p-5 transition-colors hover:border-primary/50"
+          >
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/15 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110">
               <Icon className="size-5 text-primary" />
             </span>
             <div>
@@ -47,7 +53,7 @@ export default function HowToBuyPage() {
               </h2>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{text}</p>
             </div>
-          </li>
+          </Reveal>
         ))}
       </ol>
       <div className="flex flex-wrap gap-3">

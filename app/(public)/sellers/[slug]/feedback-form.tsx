@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Loader2Icon, StarIcon, ThumbsDownIcon, ThumbsUpIcon } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,6 +27,7 @@ export function FeedbackForm({
   const [rating, setRating] = useState<number | null>(existing?.rating ?? null);
   const [hover, setHover] = useState<number | null>(null);
   const [comment, setComment] = useState(existing?.comment ?? "");
+  const reduce = useReducedMotion();
   const [saving, startSave] = useTransition();
   const [removing, startRemove] = useTransition();
   const empty = !reaction && !rating && !comment.trim();
@@ -79,7 +81,7 @@ export function FeedbackForm({
           {[1, 2, 3, 4, 5].map((star) => {
             const lit = (hover ?? rating ?? 0) >= star;
             return (
-              <button
+              <motion.button
                 key={star}
                 type="button"
                 role="radio"
@@ -87,10 +89,25 @@ export function FeedbackForm({
                 aria-label={`${star} star${star === 1 ? "" : "s"}`}
                 onClick={() => setRating(rating === star ? null : star)}
                 onMouseEnter={() => setHover(star)}
-                className="flex size-11 items-center justify-center transition-transform active:scale-90"
+                whileHover={reduce ? undefined : { scale: 1.2 }}
+                whileTap={reduce ? undefined : { scale: 0.8 }}
+                className="flex size-11 items-center justify-center"
               >
-                <StarIcon className={cn("size-7", lit ? "fill-warning text-warning" : "text-muted-foreground/50")} />
-              </button>
+                {/* Re-keyed when the rating changes so the selected stars pop in sequence */}
+                <motion.span
+                  key={rating !== null && star <= rating ? `on-${rating}` : "off"}
+                  initial={reduce || rating === null || star > rating ? false : { scale: 0.4, rotate: -30 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 14, delay: (star - 1) * 0.04 }}
+                >
+                  <StarIcon
+                    className={cn(
+                      "size-7 transition-colors",
+                      lit ? "fill-warning text-warning" : "text-muted-foreground/50"
+                    )}
+                  />
+                </motion.span>
+              </motion.button>
             );
           })}
         </div>
@@ -138,6 +155,7 @@ function ReactionButton({
   icon: React.ReactNode;
   activeClass: string;
 }) {
+  const reduce = useReducedMotion();
   return (
     <Button
       type="button"
@@ -147,7 +165,17 @@ function ReactionButton({
       onClick={onClick}
       className={cn("h-11 transition-colors active:scale-[0.97]", active && activeClass)}
     >
-      {icon} {label}
+      {/* Pops and tilts when chosen */}
+      <motion.span
+        key={String(active)}
+        className="inline-flex"
+        initial={false}
+        animate={active && !reduce ? { scale: [1, 1.5, 1], rotate: [0, -18, 0] } : { scale: 1, rotate: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+      >
+        {icon}
+      </motion.span>{" "}
+      {label}
     </Button>
   );
 }

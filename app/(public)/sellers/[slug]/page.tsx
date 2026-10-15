@@ -13,6 +13,7 @@ import {
   ThumbsUpIcon,
 } from "lucide-react";
 import { FacebookIcon, TikTokIcon } from "@/components/brand-icons";
+import { CountUp, Reveal } from "@/components/interactive";
 import { ListingCard } from "@/components/listing-card";
 import { StaggerItem } from "@/components/motion";
 import { RatingSummary, SellerLogo } from "@/components/seller-card";
@@ -74,15 +75,21 @@ async function Seller({ params }: { params: Props["params"] }) {
           </section>
         )}
         <section className="flex flex-col gap-4">
-          <h2 className="text-xl font-bold">Accounts for sale</h2>
+          <Reveal>
+            <h2 className="text-xl font-bold">Accounts for sale</h2>
+          </Reveal>
           <Suspense fallback={<SkeletonGrid count={4} />}>
             <SellerListings sellerId={seller.id} />
           </Suspense>
         </section>
         <section id="reviews" className="flex scroll-mt-20 flex-col gap-4">
-          <h2 className="text-xl font-bold">Ratings &amp; reviews</h2>
+          <Reveal>
+            <h2 className="text-xl font-bold">Ratings &amp; reviews</h2>
+          </Reveal>
           <Suspense fallback={<Skeleton className="h-64 rounded-xl" />}>
-            <Reviews seller={seller} />
+            <Reveal delay={0.1}>
+              <Reviews seller={seller} />
+            </Reveal>
           </Suspense>
         </section>
       </div>
@@ -160,7 +167,9 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
     <div className="flex items-center gap-3 rounded-xl border bg-card p-3 [&_svg]:size-5">
       {icon}
       <div>
-        <dd className="font-heading text-xl font-bold tabular-nums">{value.toLocaleString()}</dd>
+        <dd className="font-heading text-xl font-bold tabular-nums">
+          <CountUp value={value} />
+        </dd>
         <dt className="text-xs text-muted-foreground">{label}</dt>
       </div>
     </div>
