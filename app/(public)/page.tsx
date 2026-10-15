@@ -51,7 +51,7 @@ export default function HomePage() {
             <p className="font-heading text-2xl font-semibold sm:text-4xl">Free Fire Accounts Buy &amp; Sale</p>
             <p className="font-heading text-xl font-semibold text-muted-foreground sm:text-2xl">UID Top Up</p>
           </div>
-          <p className="max-w-xl text-muted-foreground sm:text-lg">
+          <p className="max-w-xl font-accent text-lg font-medium text-muted-foreground sm:text-xl">
             Browse ready-to-play accounts by region and price. Tap Buy on WhatsApp, pay the seller
             and get your login.
           </p>
@@ -78,7 +78,7 @@ export default function HomePage() {
         <div className="flex items-end justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold sm:text-3xl">Latest accounts</h2>
-            <p className="mt-1 text-sm text-muted-foreground">The newest account from each seller.</p>
+            <p className="mt-1 font-accent text-base font-medium text-muted-foreground">The newest account from each seller.</p>
           </div>
           <Link href="/accounts" className="flex min-h-11 items-center gap-1 text-sm text-primary hover:underline">
             View all <ArrowRightIcon className="size-4" />
@@ -195,7 +195,7 @@ async function TopSellers() {
       <div className="mx-auto flex w-full max-w-6xl items-end justify-between gap-4 px-4">
         <div>
           <h2 className="text-2xl font-bold sm:text-3xl">Top sellers</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Rated and reviewed by customers.</p>
+          <p className="mt-1 font-accent text-base font-medium text-muted-foreground">Rated and reviewed by customers.</p>
         </div>
         <Link href="/sellers" className="flex min-h-11 items-center gap-1 text-sm text-primary hover:underline">
           All sellers <ArrowRightIcon className="size-4" />

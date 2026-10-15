@@ -23,7 +23,7 @@ export function MobileNav({ account }: { account?: React.ReactNode }) {
       </SheetTrigger>
       <SheetContent side="right" className="p-6">
         <SheetTitle className="font-heading text-lg">Menu</SheetTitle>
-        <nav className="mt-2 flex flex-col" onClick={(event) => {
+        <nav className="mt-2 flex flex-col font-accent font-semibold" onClick={(event) => {
           // Close after following any link, including the account link
           if ((event.target as HTMLElement).closest("a")) setOpen(false);
         }}>
@@ -32,7 +32,7 @@ export function MobileNav({ account }: { account?: React.ReactNode }) {
             <Link
               key={href}
               href={href}
-              className="flex min-h-11 items-center border-b text-base"
+              className="flex min-h-11 items-center border-b text-lg"
             >
               {label}
             </Link>

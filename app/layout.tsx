@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Oxanium } from "next/font/google";
+import { Inter, Oxanium, Rajdhani } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "sonner";
 import { SITE_URL } from "@/lib/site";
@@ -8,6 +8,8 @@ import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const oxanium = Oxanium({ subsets: ["latin"], variable: "--font-oxanium" });
+// Accent text: navigation, footer, hero copy and section subtitles
+const rajdhani = Rajdhani({ subsets: ["latin"], weight: ["500", "600"], variable: "--font-rajdhani" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -25,7 +27,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={cn("dark", inter.variable, oxanium.variable)}>
+    <html lang="en" className={cn("dark", inter.variable, oxanium.variable, rajdhani.variable)}>
       <body>
         <NextTopLoader color="#ff8a00" height={2} showSpinner={false} />
         {children}

@@ -16,7 +16,7 @@ export async function AccountLink({ variant = "button" }: { variant?: "button" |
 
   if (variant === "menu") {
     return (
-      <Link href={href} className="flex min-h-11 items-center gap-2 border-b text-base">
+      <Link href={href} className="flex min-h-11 items-center gap-2 border-b text-lg">
         <Icon className="size-4" /> {label}
       </Link>
     );
