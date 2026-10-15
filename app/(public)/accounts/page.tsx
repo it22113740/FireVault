@@ -43,7 +43,13 @@ async function Accounts({ searchParams }: { searchParams: Props["searchParams"] 
     getPublishedListings(filters),
   ]);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const filtered = Boolean(filters.region || filters.availability || filters.min !== undefined || filters.max !== undefined);
+  const filtered = Boolean(
+    filters.region ||
+      filters.availability ||
+      filters.exchange ||
+      filters.min !== undefined ||
+      filters.max !== undefined
+  );
 
   return (
     <FilterNavigationProvider>

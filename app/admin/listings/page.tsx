@@ -68,7 +68,7 @@ async function Listings({ searchParams }: { searchParams: Props["searchParams"] 
   let query = supabase
     .from("listings")
     .select(
-      "id, title, price, region, image_path, availability, publish_status, updated_at, owner:profiles!listings_created_by_fkey(full_name)"
+      "id, title, price, region, exchange_available, image_path, availability, publish_status, updated_at, owner:profiles!listings_created_by_fkey(full_name)"
     );
   // Sales admins: RLS already limits rows to their own; filter explicitly too
   if (!isSuperAdmin) query = query.eq("created_by", profile.id);
@@ -167,6 +167,7 @@ async function Listings({ searchParams }: { searchParams: Props["searchParams"] 
                     {[
                       listing.price > 0 ? formatPrice(listing.price, settings.currency) : "No price",
                       listing.region || "No region",
+                      listing.exchange_available ? "Exchange possible" : null,
                       isSuperAdmin ? listing.owner?.full_name : null,
                       `Updated ${formatDate(listing.updated_at)}`,
                     ]

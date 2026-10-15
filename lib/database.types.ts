@@ -1,4 +1,4 @@
-// Mirrors supabase/migrations/ (through 20261018000100_sellers_and_feedback.sql) in the format
+// Mirrors supabase/migrations/ (through 20261019000000_listing_exchange.sql) in the format
 // produced by `supabase gen types typescript`. After applying migrations,
 // regenerate with:
 //   npx supabase gen types typescript --linked > lib/database.types.ts
@@ -79,6 +79,7 @@ export type Database = {
           created_at: string;
           created_by: string;
           description: string;
+          exchange_available: boolean;
           id: string;
           image_path: string;
           price: number;
@@ -96,6 +97,7 @@ export type Database = {
           created_at?: string;
           created_by: string;
           description?: string;
+          exchange_available?: boolean;
           id?: string;
           image_path?: string;
           price?: number;
@@ -113,6 +115,7 @@ export type Database = {
           created_at?: string;
           created_by?: string;
           description?: string;
+          exchange_available?: boolean;
           id?: string;
           image_path?: string;
           price?: number;
@@ -404,6 +407,7 @@ export type Database = {
         Row: {
           availability: Database["public"]["Enums"]["availability"] | null;
           description: string | null;
+          exchange_available: boolean | null;
           id: string | null;
           image_path: string | null;
           price: number | null;

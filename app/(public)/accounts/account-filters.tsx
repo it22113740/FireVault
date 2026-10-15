@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { SlidersHorizontalIcon } from "lucide-react";
+import { ArrowLeftRightIcon, SlidersHorizontalIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Switch } from "@/components/ui/switch";
 import type { ListingFilters } from "@/lib/store";
 import { useFilterNavigation } from "./filter-navigation";
 
@@ -27,8 +28,9 @@ export function AccountFilters({ regions, filters }: AccountFiltersProps) {
 
   return (
     <>
-      <div className="hidden md:block">
+      <div className="hidden flex-col gap-3 md:flex">
         <FilterForm regions={regions} filters={filters} layout="inline" />
+        <ExchangeToggle on={!!filters.exchange} />
       </div>
       <div className="flex items-center gap-2 md:hidden">
         <Sheet open={open} onOpenChange={setOpen}>
@@ -42,7 +44,27 @@ export function AccountFilters({ regions, filters }: AccountFiltersProps) {
         </Sheet>
         <SortSelect sort={filters.sort} className="flex-1" />
       </div>
+      <div className="md:hidden">
+        <ExchangeToggle on={!!filters.exchange} />
+      </div>
     </>
+  );
+}
+
+// Applies straight away, like the sort
+function ExchangeToggle({ on }: { on: boolean }) {
+  const { apply } = useFilterNavigation();
+  return (
+    <label className="flex min-h-11 w-fit cursor-pointer items-center gap-3 text-sm">
+      <Switch
+        checked={on}
+        onCheckedChange={(checked) => apply({ exchange: checked ? "1" : undefined })}
+        aria-label="Only show accounts open to exchange"
+      />
+      <span className="flex items-center gap-1.5">
+        <ArrowLeftRightIcon className="size-4 text-primary" /> Exchange possible only
+      </span>
+    </label>
   );
 }
 
@@ -167,7 +189,7 @@ function FilterForm({
           variant="ghost"
           className="h-11"
           onClick={() => {
-            apply({ region: undefined, availability: undefined, min: undefined, max: undefined });
+            apply({ region: undefined, availability: undefined, min: undefined, max: undefined, exchange: undefined });
             onApplied?.();
           }}
         >

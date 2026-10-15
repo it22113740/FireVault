@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeftIcon, Gamepad2Icon, MapPinIcon, ShieldCheckIcon } from "lucide-react";
 import { CopyIdButton } from "@/components/copy-id-button";
+import { ExchangeBadge } from "@/components/exchange-badge";
 import { SellerLogo } from "@/components/seller-card";
 import { FadeIn } from "@/components/motion";
 import { AvailabilityBadge } from "@/components/status-badge";
@@ -76,7 +77,10 @@ async function AccountDetail({ params }: { params: Props["params"] }) {
 
       <div className="flex flex-col gap-5 md:sticky md:top-24 md:self-start">
         <div className="flex flex-col gap-3">
-          <AvailabilityBadge availability={listing.availability} />
+          <div className="flex flex-wrap gap-2">
+            <AvailabilityBadge availability={listing.availability} />
+            {listing.exchangeAvailable && <ExchangeBadge label="Exchange possible" />}
+          </div>
           <h1 className="text-2xl leading-tight font-bold tracking-tight text-balance sm:text-3xl">
             {listing.title}
           </h1>
@@ -84,6 +88,12 @@ async function AccountDetail({ params }: { params: Props["params"] }) {
             <MapPinIcon className="size-4" /> Region {listing.region}
           </p>
           <p className="font-heading text-3xl font-bold text-primary tabular-nums">{price}</p>
+          {listing.exchangeAvailable && (
+            <p className="text-sm text-muted-foreground">
+              The seller is open to an exchange. Mention the account you&apos;d offer when you message
+              them on WhatsApp.
+            </p>
+          )}
         </div>
 
         <div className="hidden flex-col gap-3 md:flex">

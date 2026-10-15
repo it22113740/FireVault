@@ -16,6 +16,8 @@ export const listingFormSchema = z.object({
     .max(LISTING_LIMITS.description, `Keep the description under ${LISTING_LIMITS.description} characters`),
   price: priceInputSchema,
   region: z.string().trim().max(20),
+  // Seller is open to swapping for another account
+  exchangeAvailable: z.boolean(),
 });
 export type ListingFormValues = z.input<typeof listingFormSchema>;
 

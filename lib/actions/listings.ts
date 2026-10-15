@@ -56,6 +56,7 @@ export async function saveListing(formData: FormData): Promise<ActionResult<Save
     description: stripHtml(String(formData.get("description") ?? "")),
     price: String(formData.get("price") ?? ""),
     region: String(formData.get("region") ?? ""),
+    exchangeAvailable: formData.get("exchangeAvailable") === "true",
   };
   const parsed = listingFormSchema.safeParse(raw);
   if (!parsed.success) return invalid(parsed.error);
@@ -139,6 +140,7 @@ export async function saveListing(formData: FormData): Promise<ActionResult<Save
     description: values.description,
     price: parsePrice(values.price),
     region: values.region,
+    exchange_available: values.exchangeAvailable,
     image_path: imagePath,
     publish_status: nextStatus,
     ...(intent === "publish" ? { reviewed_by: profile.id, rejection_reason: null } : {}),

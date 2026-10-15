@@ -22,6 +22,8 @@ export type PublicListing = {
   region: string;
   imageUrl: string;
   availability: Availability;
+  // Seller is open to swapping for another account
+  exchangeAvailable: boolean;
   publishedAt: string | null;
   whatsappNumber: string | null;
   // The seller's shop; null for the super admin's own listings
@@ -50,6 +52,7 @@ const filtersSchema = z.object({
   min: optionalNumber,
   max: optionalNumber,
   availability: z.enum(["available", "reserved"]).optional().catch(undefined),
+  exchange: z.literal("1").optional().catch(undefined),
   sort: z.enum(SORTS).default("newest").catch("newest"),
   page: z.coerce.number().int().min(1).default(1).catch(1),
 });
@@ -63,6 +66,7 @@ export function parseListingFilters(params: Record<string, string | string[] | u
     min: first(params.min),
     max: first(params.max),
     availability: first(params.availability),
+    exchange: first(params.exchange),
     sort: first(params.sort),
     page: first(params.page),
   });
@@ -76,6 +80,7 @@ type ViewRow = {
   region: string | null;
   image_path: string | null;
   availability: Availability | null;
+  exchange_available: boolean | null;
   published_at: string | null;
   whatsapp_number: string | null;
   seller_name: string | null;
@@ -92,6 +97,7 @@ function toPublicListing(row: ViewRow): PublicListing {
     region: row.region ?? "",
     imageUrl: publicImageUrl(row.image_path),
     availability: row.availability ?? "available",
+    exchangeAvailable: row.exchange_available ?? false,
     publishedAt: row.published_at,
     whatsappNumber: row.whatsapp_number || null,
     seller:
@@ -114,6 +120,7 @@ async function getPublishedListingsCached(filters: ListingFilters) {
   let query = createPublicClient().from("published_listings").select("*", { count: "exact" });
   if (filters.region) query = query.eq("region", filters.region);
   if (filters.availability) query = query.eq("availability", filters.availability);
+  if (filters.exchange) query = query.eq("exchange_available", true);
   if (filters.min !== undefined) query = query.gte("price", filters.min);
   if (filters.max !== undefined) query = query.lte("price", filters.max);
 

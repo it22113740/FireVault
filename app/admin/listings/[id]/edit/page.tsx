@@ -43,7 +43,7 @@ async function EditListing({ params }: { params: Props["params"] }) {
   // RLS: sales admins can only load their own listings
   const { data: listing } = await supabase
     .from("listings")
-    .select("id, title, description, price, region, image_path, publish_status, rejection_reason")
+    .select("id, title, description, price, region, exchange_available, image_path, publish_status, rejection_reason")
     .eq("id", id)
     .maybeSingle();
   if (!listing) notFound();

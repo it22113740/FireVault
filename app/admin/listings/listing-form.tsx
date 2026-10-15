@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleAlertIcon, CloudIcon, Loader2Icon } from "lucide-react";
-import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
+import { ArrowLeftRightIcon, CircleAlertIcon, CloudIcon, Loader2Icon } from "lucide-react";
+import { Controller, useForm, useWatch, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { FormField } from "@/components/form-field";
 import { ImagePicker } from "@/components/image-picker";
@@ -13,6 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { saveListing } from "@/lib/actions/listings";
 import { showActionError } from "@/lib/forms";
@@ -36,6 +37,7 @@ export type EditableListing = {
   description: string;
   price: number;
   region: string;
+  exchange_available: boolean;
   imageUrl: string;
   publish_status: PublishStatus;
   rejection_reason: string | null;
@@ -79,6 +81,7 @@ export function ListingForm({ role, regions, currency, listing }: ListingFormPro
       description: listing?.description ?? "",
       price: listing?.price ? formatPriceInput(String(listing.price)) : "",
       region: listing?.region ?? "",
+      exchangeAvailable: listing?.exchange_available ?? false,
     },
   });
   const { errors, isDirty } = form.formState;
@@ -93,7 +96,7 @@ export function ListingForm({ role, regions, currency, listing }: ListingFormPro
       const formData = new FormData();
       formData.set("intent", intent);
       if (id) formData.set("id", id);
-      Object.entries(values).forEach(([key, value]) => formData.set(key, value));
+      Object.entries(values).forEach(([key, value]) => formData.set(key, String(value)));
       if (imageFile) {
         setUploadProgress(0);
         formData.set("stagedImage", await stageImage(imageFile, setUploadProgress));
@@ -281,6 +284,25 @@ export function ListingForm({ role, regions, currency, listing }: ListingFormPro
               </NativeSelect>
             </FormField>
           </div>
+
+          <Controller
+            control={form.control}
+            name="exchangeAvailable"
+            render={({ field }) => (
+              <label className="flex min-h-11 cursor-pointer items-center justify-between gap-4 rounded-xl border bg-card px-4 py-3">
+                <span>
+                  <span className="flex items-center gap-2 text-sm font-medium">
+                    <ArrowLeftRightIcon className="size-4 text-primary" /> Exchange possible
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    Customers can offer another account in exchange. Changing this never sends a live
+                    listing back to review.
+                  </span>
+                </span>
+                <Switch checked={field.value} onCheckedChange={field.onChange} aria-label="Exchange possible" />
+              </label>
+            )}
+          />
         </div>
 
         <FormField

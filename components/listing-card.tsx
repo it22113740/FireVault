@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Gamepad2Icon, MapPinIcon } from "lucide-react";
+import { ExchangeBadge } from "@/components/exchange-badge";
 import { AvailabilityBadge } from "@/components/status-badge";
 import { formatPrice } from "@/lib/format";
 import type { PublicListing } from "@/lib/store";
@@ -41,6 +42,9 @@ export function ListingCard({
           />
         ) : (
           <Gamepad2Icon className="absolute inset-0 m-auto size-10 text-muted-foreground" />
+        )}
+        {listing.exchangeAvailable && (
+          <ExchangeBadge className="absolute top-2 left-2 bg-background/85 backdrop-blur" />
         )}
         {reserved && (
           <span className="absolute top-3 -right-9 w-32 rotate-45 bg-warning py-1 text-center text-xs font-bold text-primary-foreground shadow">
