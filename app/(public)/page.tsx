@@ -1,3 +1,4 @@
+import { AnnouncementBanners } from "@/components/announcement-banners";
 import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowRightIcon, BookOpenIcon } from "lucide-react";
@@ -98,7 +99,9 @@ export default function HomePage() {
         </Suspense>
       </section>
 
-      
+      <Suspense fallback={null}>
+        <AnnouncementBanners />
+      </Suspense>
 
       <section className="mx-auto max-w-6xl px-4 pb-16">
         <Reveal>

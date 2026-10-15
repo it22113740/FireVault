@@ -9,6 +9,7 @@ import {
   LayoutDashboardIcon,
   ListIcon,
   MenuIcon,
+  MegaphoneIcon,
   SettingsIcon,
   StoreIcon,
   UserCircleIcon,
@@ -37,6 +38,7 @@ const NAV: NavItem[] = [
   { href: "/admin/sales-admins", label: "Sales admins", icon: UsersIcon, roles: SUPER },
   { href: "/admin/customers", label: "Customers", icon: UserRoundIcon, roles: SUPER },
   { href: "/admin/top-ups", label: "Top-ups", icon: GemIcon, roles: SUPER },
+  { href: "/admin/announcements", label: "Announcements", icon: MegaphoneIcon, roles: SUPER },
   { href: "/admin/settings", label: "Settings", icon: SettingsIcon, roles: SUPER },
   { href: "/admin/profile", label: "Profile", icon: UserCircleIcon, roles: BOTH },
 ];

@@ -3,6 +3,10 @@ import type { Json } from "@/lib/database.types";
 import { createClient } from "@/lib/supabase/server";
 
 export type AuditAction =
+  | "announcement.create"
+  | "announcement.publish"
+  | "announcement.hide"
+  | "announcement.delete"
   | "application.approve"
   | "application.deny"
   | "salesadmin.activate"

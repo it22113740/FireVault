@@ -1,4 +1,4 @@
-// Mirrors supabase/migrations/ (through 20261020000000_latest_listing_per_seller.sql) in the format
+// Mirrors supabase/migrations/ (through 20261022000000_announcements.sql) in the format
 // produced by `supabase gen types typescript`. After applying migrations,
 // regenerate with:
 //   npx supabase gen types typescript --linked > lib/database.types.ts
@@ -11,6 +11,12 @@ export type Database = {
   };
   public: {
     Tables: {
+      announcements: {
+        Row: { id: string; title: string; image_path: string; published: boolean; created_at: string };
+        Insert: { id?: string; title: string; image_path: string; published?: boolean; created_at?: string };
+        Update: { id?: string; title?: string; image_path?: string; published?: boolean; created_at?: string };
+        Relationships: [];
+      };
       app_settings: {
         Row: {
           admin_whatsapp: string;
