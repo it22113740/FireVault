@@ -111,7 +111,12 @@ export async function submitApplication(formData: FormData): Promise<ActionResul
 
 // PLAN.md "Sales admin approval" steps 1–5, with rollback of the auth user
 // if anything after creating it fails, so the approval can be retried.
-export async function approveApplication(id: string): Promise<ActionResult> {
+// When the reset email can't be sent (e.g. Supabase's built-in mailer only
+// delivers to team members and a few emails an hour), approval still goes
+// ahead and the super admin gets a one-time setup link to send the seller.
+export type ApprovalResult = { emailed: true } | { emailed: false; setupLink: string; reason: string };
+
+export async function approveApplication(id: string): Promise<ActionResult<ApprovalResult>> {
   const reviewer = await requireSuperAdmin();
   if (!uuidSchema.safeParse(id).success) return fail("Application not found.");
 
@@ -147,6 +152,7 @@ export async function approveApplication(id: string): Promise<ActionResult> {
     );
   }
   const userId = created.user.id;
+  let delivery: ApprovalResult = { emailed: true };
 
   try {
     // Step 2: seller profile copied from the application
@@ -166,7 +172,28 @@ export async function approveApplication(id: string): Promise<ActionResult> {
     const { error: emailError } = await admin.auth.resetPasswordForEmail(application.email, {
       redirectTo: `${SITE_URL}/auth/confirm?next=/reset-password`,
     });
-    if (emailError) throw new Error(emailError.message);
+    if (emailError) {
+      // Fall back to a link the super admin sends by hand. It goes through
+      // /auth/confirm like the email would, so it works on any device.
+      const { data: link, error: linkError } = await admin.auth.admin.generateLink({
+        type: "recovery",
+        email: application.email,
+      });
+      if (linkError || !link.properties?.hashed_token) {
+        throw new Error(`Reset email failed (${emailError.message}) and no link could be made`);
+      }
+      const query = new URLSearchParams({
+        token_hash: link.properties.hashed_token,
+        type: "recovery",
+        next: "/reset-password",
+      });
+      delivery = {
+        emailed: false,
+        setupLink: `${SITE_URL}/auth/confirm?${query}`,
+        reason: emailError.message,
+      };
+      console.error("Approval: reset email not sent, setup link generated instead:", emailError.message);
+    }
 
     // Step 4: mark approved (guarded so a parallel review can't double-approve)
     const { data: updated, error: updateError } = await supabase
@@ -187,12 +214,15 @@ export async function approveApplication(id: string): Promise<ActionResult> {
     // Deleting the auth user cascades to the profile
     await admin.auth.admin.deleteUser(userId);
     console.error("Approval rolled back:", error);
-    return fail("Approval failed and was rolled back. Please try again.");
+    return fail(`Approval failed and was rolled back: ${(error as Error).message}`);
   }
 
-  await logAudit(reviewer.id, "application.approve", id, { user_id: userId });
+  await logAudit(reviewer.id, "application.approve", id, {
+    user_id: userId,
+    emailed: delivery.emailed,
+  });
   refresh();
-  return ok();
+  return ok(delivery);
 }
 
 export async function denyApplication(

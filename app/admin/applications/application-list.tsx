@@ -2,7 +2,14 @@
 
 import { useState, useTransition } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { CheckIcon, Loader2Icon, UserPlusIcon, XIcon } from "lucide-react";
+import {
+  CheckIcon,
+  CopyIcon,
+  Loader2Icon,
+  MessageCircleIcon,
+  UserPlusIcon,
+  XIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { EmptyState } from "@/components/empty-state";
@@ -34,6 +41,8 @@ const EMPTY: Record<Enums<"application_status">, string> = {
   denied: "No denied applications.",
 };
 
+type SetupLink = { name: string; whatsapp: string; link: string; reason: string };
+
 export function ApplicationList({
   applications,
   status,
@@ -42,9 +51,20 @@ export function ApplicationList({
   status: Enums<"application_status">;
 }) {
   const reduce = useReducedMotion();
+  // Lives here, not in the card: the card leaves the list once approved
+  const [setupLink, setSetupLink] = useState<SetupLink | null>(null);
+
+  const setupDialog = (
+    <SetupLinkDialog setupLink={setupLink} onClose={() => setSetupLink(null)} />
+  );
 
   if (applications.length === 0) {
-    return <EmptyState icon={UserPlusIcon} title={EMPTY[status]} />;
+    return (
+      <>
+        <EmptyState icon={UserPlusIcon} title={EMPTY[status]} />
+        {setupDialog}
+      </>
+    );
   }
 
   // Reviewed cards slide out when the refreshed list no longer includes them
@@ -58,15 +78,77 @@ export function ApplicationList({
             exit={{ opacity: 0, x: reduce ? 0 : 40 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
           >
-            <ApplicationCard application={application} />
+            <ApplicationCard application={application} onSetupLink={setSetupLink} />
           </motion.li>
         ))}
       </AnimatePresence>
+      {setupDialog}
     </ul>
   );
 }
 
-function ApplicationCard({ application }: { application: ApplicationRow }) {
+// Shown when the reset email couldn't be sent: the super admin passes the
+// one-time setup link on themselves
+function SetupLinkDialog({ setupLink, onClose }: { setupLink: SetupLink | null; onClose: () => void }) {
+  async function copy() {
+    if (!setupLink) return;
+    try {
+      await navigator.clipboard.writeText(setupLink.link);
+      toast.success("Link copied.");
+    } catch {
+      toast.error("Couldn't copy. Select the link and copy it manually.");
+    }
+  }
+
+  return (
+    <Dialog open={setupLink !== null} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogTitle>Send {setupLink?.name} their setup link</DialogTitle>
+        <p className="text-sm text-muted-foreground">
+          They&apos;re approved, but the password email couldn&apos;t be sent
+          {setupLink?.reason ? ` (${setupLink.reason})` : ""}. Send them this one-time link to set
+          their password. It expires soon, so send it now.
+        </p>
+        <p className="rounded-lg border bg-muted/50 p-3 font-mono text-xs break-all select-all">
+          {setupLink?.link}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button size="lg" className="h-11" onClick={copy}>
+            <CopyIcon /> Copy link
+          </Button>
+          {setupLink && (
+            <Button
+              size="lg"
+              variant="outline"
+              className="h-11"
+              nativeButton={false}
+              render={
+                <a
+                  href={whatsappUrl(
+                    setupLink.whatsapp,
+                    `Hi ${setupLink.name}, your FireVault seller account is approved! Set your password here: ${setupLink.link}`
+                  )}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                />
+              }
+            >
+              <MessageCircleIcon /> Send on WhatsApp
+            </Button>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ApplicationCard({
+  application,
+  onSetupLink,
+}: {
+  application: ApplicationRow;
+  onSetupLink: (setupLink: SetupLink) => void;
+}) {
   const [zoom, setZoom] = useState(false);
 
   return (
@@ -122,7 +204,9 @@ function ApplicationCard({ application }: { application: ApplicationRow }) {
             <span className="font-medium">Reason:</span> {application.deny_reason}
           </p>
         )}
-        {application.status === "pending" && <ReviewActions application={application} />}
+        {application.status === "pending" && (
+          <ReviewActions application={application} onSetupLink={onSetupLink} />
+        )}
       </div>
 
       {application.screenshotUrl && (
@@ -142,7 +226,13 @@ function ApplicationCard({ application }: { application: ApplicationRow }) {
   );
 }
 
-function ReviewActions({ application }: { application: ApplicationRow }) {
+function ReviewActions({
+  application,
+  onSetupLink,
+}: {
+  application: ApplicationRow;
+  onSetupLink: (setupLink: SetupLink) => void;
+}) {
   const [approving, startApprove] = useTransition();
   const [denyOpen, setDenyOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -150,10 +240,18 @@ function ReviewActions({ application }: { application: ApplicationRow }) {
   function approve() {
     startApprove(async () => {
       const result = await approveApplication(application.id);
-      if (result.ok) {
+      if (!result.ok) {
+        toast.error(result.error);
+      } else if (result.data.emailed) {
         toast.success(`${application.full_name} approved. They'll get an email to set their password.`);
       } else {
-        toast.error(result.error);
+        toast.success(`${application.full_name} approved.`);
+        onSetupLink({
+          name: application.full_name,
+          whatsapp: application.whatsapp_number,
+          link: result.data.setupLink,
+          reason: result.data.reason,
+        });
       }
     });
   }
