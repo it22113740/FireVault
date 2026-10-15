@@ -39,10 +39,13 @@ export default function HomePage() {
         />
         <div className="absolute inset-0 -z-10 bg-linear-to-t from-background via-background/70 to-background/20" />
         <FadeIn className="mx-auto flex max-w-6xl flex-col gap-5 px-4 py-16 sm:py-24">
-          <h1 className="max-w-2xl text-4xl leading-tight font-bold tracking-tight text-balance sm:text-6xl">
-            Game accounts &amp; top-ups,{" "}
-            <span className="bg-brand bg-clip-text text-transparent">bought on WhatsApp</span>
-          </h1>
+          <div className="flex flex-col gap-2">
+            <h1 className="bg-brand bg-clip-text text-5xl leading-none font-bold tracking-tight text-transparent sm:text-7xl">
+              Banzzz•23
+            </h1>
+            <p className="font-heading text-2xl font-semibold sm:text-4xl">Free Fire Accounts Buy &amp; Sale</p>
+            <p className="font-heading text-xl font-semibold text-muted-foreground sm:text-2xl">UID Top Up</p>
+          </div>
           <p className="max-w-xl text-muted-foreground sm:text-lg">
             Browse ready-to-play accounts by region and price. Tap Buy on WhatsApp, pay the seller
             and get your login.
