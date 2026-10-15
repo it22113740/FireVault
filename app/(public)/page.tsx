@@ -1,33 +1,21 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import {
-  ArrowRightIcon,
-  BookOpenIcon,
-  CrownIcon,
-  GemIcon,
-  SparklesIcon,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowRightIcon, BookOpenIcon } from "lucide-react";
 import { Magnetic, Reveal } from "@/components/interactive";
 import { ListingCard } from "@/components/listing-card";
 import { ListingCarousel } from "@/components/listing-carousel";
 import { SellerCta } from "@/components/seller-cta";
 import { SellerMarquee } from "@/components/seller-marquee";
 import { SkeletonCard } from "@/components/skeletons";
+import { TopupShowcase } from "@/components/topup-showcase";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { getSellers } from "@/lib/sellers";
 import { getSettings } from "@/lib/settings";
-import { getLatestListingPerSeller } from "@/lib/store";
-import { TOPUP_CATEGORIES, type TopupCategory } from "@/lib/topups";
+import { getLatestListingPerSeller, getPublishedTopups } from "@/lib/store";
+import { TOPUP_CATEGORIES } from "@/lib/topups";
 import { HeroBackground } from "./hero-background";
-
-const CATEGORY_DETAILS: Record<TopupCategory, { text: string; icon: LucideIcon }> = {
-  membership: { text: "Weekly and monthly passes", icon: CrownIcon },
-  vip_bundle: { text: "Bundles with extra rewards", icon: SparklesIcon },
-  diamonds: { text: "Diamond packs of every size", icon: GemIcon },
-};
 
 export default function HomePage() {
   return (
@@ -100,31 +88,12 @@ export default function HomePage() {
         <TopSellers />
       </Suspense>
 
-      <section className="mx-auto flex max-w-6xl flex-col gap-5 px-4 pb-12">
-        <Reveal>
-          <h2 className="text-2xl font-bold sm:text-3xl">Top-ups</h2>
-        </Reveal>
-        <ul className="grid gap-3 sm:grid-cols-3">
-          {TOPUP_CATEGORIES.map(({ value, label }, index) => {
-            const { text, icon: Icon } = CATEGORY_DETAILS[value];
-            return (
-              <Reveal as="li" key={value} delay={index * 0.08} className="h-full">
-                <Link
-                  href={`/top-ups?category=${value}`}
-                  className="group flex h-full items-center gap-4 rounded-xl border bg-card p-5 transition duration-200 hover:border-primary/50 active:scale-[0.98] md:hover:-translate-y-1"
-                >
-                  <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/15 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110">
-                    <Icon className="size-6 text-primary" />
-                  </span>
-                  <span>
-                    <span className="block font-heading text-lg font-semibold">{label}</span>
-                    <span className="text-sm text-muted-foreground">{text}</span>
-                  </span>
-                </Link>
-              </Reveal>
-            );
-          })}
-        </ul>
+      <section className="mx-auto max-w-6xl px-4 pb-12">
+        <Suspense fallback={<Skeleton className="h-[34rem] rounded-3xl lg:h-[28rem]" />}>
+          <Reveal>
+            <TopupsSection />
+          </Reveal>
+        </Suspense>
       </section>
 
       <section className="mx-auto max-w-6xl px-4 pb-16">
@@ -179,6 +148,22 @@ async function HeroWhatsApp() {
       label="Chat on WhatsApp"
       variant="secondary"
       className="px-5"
+    />
+  );
+}
+
+// Top-up banner with each category's live pack count and starting price
+async function TopupsSection() {
+  const [topups, settings] = await Promise.all([getPublishedTopups(), getSettings()]);
+  const categories = TOPUP_CATEGORIES.map(({ value, label }) => {
+    const prices = topups.filter((topup) => topup.category === value).map((topup) => topup.price);
+    return { value, label, count: prices.length, minPrice: prices.length ? Math.min(...prices) : null };
+  });
+  return (
+    <TopupShowcase
+      categories={categories}
+      currency={settings.currency}
+      whatsappNumber={settings.admin_whatsapp}
     />
   );
 }
