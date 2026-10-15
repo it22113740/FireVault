@@ -6,12 +6,12 @@ import {
   CrownIcon,
   GemIcon,
   SparklesIcon,
-  StoreIcon,
   type LucideIcon,
 } from "lucide-react";
 import { ListingCard } from "@/components/listing-card";
 import { ListingCarousel } from "@/components/listing-carousel";
 import { FadeIn } from "@/components/motion";
+import { SellerCta } from "@/components/seller-cta";
 import { SellerMarquee } from "@/components/seller-marquee";
 import { SkeletonCard } from "@/components/skeletons";
 import { Button } from "@/components/ui/button";
@@ -119,20 +119,7 @@ export default function HomePage() {
       </section>
 
       <section className="mx-auto max-w-6xl px-4 pb-16">
-        <div className="flex flex-col items-start gap-4 rounded-2xl border bg-card p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
-          <div className="flex items-start gap-4">
-            <StoreIcon className="mt-1 size-8 shrink-0 text-primary" />
-            <div>
-              <h2 className="text-xl font-bold sm:text-2xl">Have accounts to sell?</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Apply to become a seller, list your accounts and chat with buyers on WhatsApp.
-              </p>
-            </div>
-          </div>
-          <Button size="lg" variant="outline" className="h-11" render={<Link href="/apply" />} nativeButton={false}>
-            Become a seller
-          </Button>
-        </div>
+        <SellerCta />
       </section>
     </>
   );
