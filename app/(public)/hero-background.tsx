@@ -4,11 +4,17 @@ import { getImageProps } from "next/image";
 // <picture> means each device downloads only its own image. Two layers: a
 // blurred copy fills any spare space, and the whole image sits on top
 // (object-contain, never cropped).
-const DESKTOP = { src: "/hero.jpg", width: 1672, height: 941 };
-const MOBILE = { src: "/hero_mobile.jpg", width: 940, height: 1672 };
+const DESKTOP = { src: "/hero.jpg" };
+const MOBILE = { src: "/hero_mobile.jpg" };
 
 function HeroPicture({ className, priority }: { className: string; priority?: boolean }) {
-  const common = { alt: "", fill: true, sizes: "100vw", priority };
+  const common = {
+    alt: "",
+    fill: true,
+    sizes: "100vw",
+    loading: priority ? "eager" as const : "lazy" as const,
+    fetchPriority: priority ? "high" as const : "auto" as const,
+  };
   const { props: { srcSet: desktop } } = getImageProps({ ...common, ...DESKTOP });
   const { props: { srcSet: mobile, ...rest } } = getImageProps({ ...common, ...MOBILE });
 

@@ -195,6 +195,7 @@ export type Database = {
           screenshot_path: string;
           status: Database["public"]["Enums"]["application_status"];
           user_id: string | null;
+          whatsapp_group_url: string | null;
           whatsapp_number: string;
         };
         Insert: {
@@ -210,6 +211,7 @@ export type Database = {
           screenshot_path: string;
           status?: Database["public"]["Enums"]["application_status"];
           user_id?: string | null;
+          whatsapp_group_url?: string | null;
           whatsapp_number: string;
         };
         Update: {
@@ -225,6 +227,7 @@ export type Database = {
           screenshot_path?: string;
           status?: Database["public"]["Enums"]["application_status"];
           user_id?: string | null;
+          whatsapp_group_url?: string | null;
           whatsapp_number?: string;
         };
         Relationships: [

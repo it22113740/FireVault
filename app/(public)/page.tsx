@@ -34,7 +34,7 @@ export default function HomePage() {
                 Banzzz•23
               </span>
               <span className="font-heading text-2xl font-bold tracking-[0.2em] uppercase sm:text-4xl">
-                FF E Store
+                FF E-Store
               </span>
             </h1>
             <p className="font-heading text-2xl font-semibold sm:text-4xl">Free Fire Accounts Buy &amp; Sale</p>
@@ -60,12 +60,18 @@ export default function HomePage() {
             <Suspense fallback={<Skeleton className="h-11 w-52" />}>
               <HeroWhatsApp />
             </Suspense>
-            <Button size="lg" variant="outline" className="h-11 px-5" render={<Link href="/how-to-buy" />} nativeButton={false}>
-              <BookOpenIcon /> How buying works
-            </Button>
+            <div className="w-full">
+              <Button size="lg" variant="outline" className="h-11 px-5" render={<Link href="/how-to-buy" />} nativeButton={false}>
+                <BookOpenIcon /> How buying works
+              </Button>
+            </div>
           </Reveal>
         </div>
       </section>
+
+      <Suspense fallback={<TopSellersSkeleton />}>
+        <TopSellers />
+      </Suspense>
 
       <section className="mx-auto flex max-w-6xl flex-col gap-5 px-4 py-12">
         <Reveal className="flex items-end justify-between gap-4">
@@ -92,9 +98,7 @@ export default function HomePage() {
         </Suspense>
       </section>
 
-      <Suspense fallback={<TopSellersSkeleton />}>
-        <TopSellers />
-      </Suspense>
+      
 
       <section className="mx-auto max-w-6xl px-4 pb-16">
         <Reveal>
@@ -145,7 +149,7 @@ async function HeroWhatsApp() {
     <WhatsAppButton
       number={settings.admin_whatsapp}
       message="Hi Banzzz•23 FF E Store! I have a question."
-      label="Chat on WhatsApp"
+      label="To sell accounts contact via whatsapp"
       variant="secondary"
       className="px-5"
     />
@@ -174,7 +178,7 @@ async function TopSellers() {
   if (sellers.length === 0) return null;
 
   return (
-    <section className="flex flex-col gap-5 pb-12">
+    <section className="flex flex-col gap-5 pb-12 pt-12">
       <Reveal className="mx-auto flex w-full max-w-6xl items-end justify-between gap-4 px-4">
         <div>
           <h2 className="text-2xl font-bold sm:text-3xl">Top sellers</h2>

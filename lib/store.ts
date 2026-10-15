@@ -48,6 +48,7 @@ const optionalNumber = z.preprocess(
 );
 
 const filtersSchema = z.object({
+  seller: z.uuid().optional().catch(undefined),
   region: z.string().trim().max(20).optional().catch(undefined),
   min: optionalNumber,
   max: optionalNumber,
@@ -62,6 +63,7 @@ export type ListingFilters = z.output<typeof filtersSchema>;
 export function parseListingFilters(params: Record<string, string | string[] | undefined>) {
   const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
   return filtersSchema.parse({
+    seller: first(params.seller) || undefined,
     region: first(params.region) || undefined,
     min: first(params.min),
     max: first(params.max),
@@ -119,6 +121,7 @@ async function getPublishedListingsCached(filters: ListingFilters) {
 
   let query = createPublicClient().from("published_listings").select("*", { count: "exact" });
   if (filters.region) query = query.eq("region", filters.region);
+  if (filters.seller) query = query.eq("seller_id", filters.seller);
   if (filters.availability) query = query.eq("availability", filters.availability);
   if (filters.exchange) query = query.eq("exchange_available", true);
   if (filters.min !== undefined) query = query.gte("price", filters.min);

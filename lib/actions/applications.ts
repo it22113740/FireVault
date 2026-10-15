@@ -37,6 +37,7 @@ export async function submitApplication(formData: FormData): Promise<ActionResul
     fullName: formData.get("fullName") ?? "",
     email: formData.get("email") ?? "",
     whatsappNumber: formData.get("whatsappNumber") ?? "",
+    whatsappGroupUrl: formData.get("whatsappGroupUrl") ?? "",
     contactNumber: formData.get("contactNumber") ?? "",
   });
   if (!parsed.success) return invalid(parsed.error);
@@ -91,6 +92,7 @@ export async function submitApplication(formData: FormData): Promise<ActionResul
     full_name: application.fullName,
     email: application.email,
     whatsapp_number: application.whatsappNumber,
+    whatsapp_group_url: application.whatsappGroupUrl,
     contact_number: application.contactNumber,
     screenshot_path: image.path,
     ip_hash: ipHash,

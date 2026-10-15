@@ -27,6 +27,7 @@ export type ApplicationRow = {
   full_name: string;
   email: string;
   whatsapp_number: string;
+  whatsapp_group_url: string | null;
   contact_number: string;
   status: Enums<"application_status">;
   deny_reason: string | null;
@@ -195,6 +196,13 @@ function ApplicationCard({
               {application.contact_number}
             </a>
           </Detail>
+          {application.whatsapp_group_url && (
+            <Detail label="WhatsApp group">
+              <a href={application.whatsapp_group_url} target="_blank" rel="noopener noreferrer" className="hover:text-primary">
+                Open group invite
+              </a>
+            </Detail>
+          )}
           {application.reviewed_at && (
             <Detail label="Reviewed">{formatDate(application.reviewed_at)}</Detail>
           )}

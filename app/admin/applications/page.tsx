@@ -42,7 +42,7 @@ async function Applications({ searchParams }: { searchParams: Props["searchParam
   const [{ data: applications }, ...counts] = await Promise.all([
     supabase
       .from("sales_admin_applications")
-      .select("id, full_name, email, whatsapp_number, contact_number, screenshot_path, status, deny_reason, created_at, reviewed_at")
+      .select("id, full_name, email, whatsapp_number, whatsapp_group_url, contact_number, screenshot_path, status, deny_reason, created_at, reviewed_at")
       .eq("status", status)
       .order("created_at", { ascending: status === "pending" })
       .limit(100),

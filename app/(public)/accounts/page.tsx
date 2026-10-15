@@ -7,6 +7,7 @@ import { ListingCard } from "@/components/listing-card";
 import { StaggerItem } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { getSettings } from "@/lib/settings";
+import { getSellers } from "@/lib/sellers";
 import { PAGE_SIZE, getPublishedListings, parseListingFilters } from "@/lib/store";
 import { AccountFilters } from "./account-filters";
 import { AccountsSkeleton } from "./accounts-skeleton";
@@ -38,13 +39,14 @@ export default function AccountsPage({ searchParams }: Props) {
 
 async function Accounts({ searchParams }: { searchParams: Props["searchParams"] }) {
   const filters = parseListingFilters(await searchParams);
-  const [settings, { listings, total }] = await Promise.all([
+  const [settings, { listings, total }, sellers] = await Promise.all([
     getSettings(),
     getPublishedListings(filters),
+    getSellers(),
   ]);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const filtered = Boolean(
-    filters.region ||
+    filters.seller || filters.region ||
       filters.availability ||
       filters.exchange ||
       filters.min !== undefined ||
@@ -54,7 +56,11 @@ async function Accounts({ searchParams }: { searchParams: Props["searchParams"] 
   return (
     <FilterNavigationProvider>
       <div className="flex flex-col gap-6">
-        <AccountFilters regions={settings.regions} filters={filters} />
+        <AccountFilters
+          regions={settings.regions}
+          sellers={sellers.map(({ id, name }) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name))}
+          filters={filters}
+        />
         <FilteredResults>
           {listings.length === 0 ? (
             <EmptyState

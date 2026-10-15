@@ -11,7 +11,11 @@ import { Switch } from "@/components/ui/switch";
 import type { ListingFilters } from "@/lib/store";
 import { useFilterNavigation } from "./filter-navigation";
 
-type AccountFiltersProps = { regions: string[]; filters: ListingFilters };
+type AccountFiltersProps = {
+  regions: string[];
+  sellers: { id: string; name: string }[];
+  filters: ListingFilters;
+};
 
 const SORT_OPTIONS = [
   { value: "newest", label: "Newest" },
@@ -20,16 +24,16 @@ const SORT_OPTIONS = [
 ];
 
 // Desktop: inline bar. Mobile: "Filters" opens a bottom sheet.
-export function AccountFilters({ regions, filters }: AccountFiltersProps) {
+export function AccountFilters({ regions, sellers, filters }: AccountFiltersProps) {
   const [open, setOpen] = useState(false);
-  const active = [filters.region, filters.min, filters.max, filters.availability].filter(
+  const active = [filters.seller, filters.region, filters.min, filters.max, filters.availability].filter(
     (value) => value !== undefined
   ).length;
 
   return (
     <>
       <div className="hidden flex-col gap-3 md:flex">
-        <FilterForm regions={regions} filters={filters} layout="inline" />
+        <FilterForm regions={regions} sellers={sellers} filters={filters} layout="inline" />
         <ExchangeToggle on={!!filters.exchange} />
       </div>
       <div className="flex items-center gap-2 md:hidden">
@@ -37,9 +41,9 @@ export function AccountFilters({ regions, filters }: AccountFiltersProps) {
           <SheetTrigger render={<Button variant="outline" size="lg" className="h-11 flex-1" />}>
             <SlidersHorizontalIcon /> Filters{active > 0 && ` (${active})`}
           </SheetTrigger>
-          <SheetContent side="bottom" className="max-h-[85svh] gap-0 rounded-t-2xl p-5">
+          <SheetContent side="bottom" className="max-h-[85svh] gap-0 overflow-y-auto rounded-t-2xl p-5">
             <SheetTitle className="mb-4 font-heading text-lg">Filter accounts</SheetTitle>
-            <FilterForm regions={regions} filters={filters} layout="stacked" onApplied={() => setOpen(false)} />
+            <FilterForm regions={regions} sellers={sellers} filters={filters} layout="stacked" onApplied={() => setOpen(false)} />
           </SheetContent>
         </Sheet>
         <SortSelect sort={filters.sort} className="flex-1" />
@@ -88,6 +92,7 @@ function SortSelect({ sort, className }: { sort: string; className?: string }) {
 
 function FilterForm({
   regions,
+  sellers,
   filters,
   layout,
   onApplied,
@@ -99,6 +104,7 @@ function FilterForm({
     const data = new FormData(event.currentTarget);
     const value = (key: string) => String(data.get(key) ?? "").trim() || undefined;
     apply({
+      seller: value("seller"),
       region: value("region"),
       availability: value("availability"),
       min: value("min"),
@@ -116,10 +122,29 @@ function FilterForm({
       onSubmit={submit}
       className={
         inline
-          ? "grid grid-cols-[1fr_1fr_0.8fr_0.8fr_auto_1fr] items-end gap-3 rounded-xl border bg-card p-3"
+          ? "grid grid-cols-3 items-end gap-3 rounded-xl border bg-card p-3 xl:grid-cols-[1fr_1fr_1fr_0.8fr_0.8fr_auto_1fr]"
           : "flex flex-col gap-4"
       }
     >
+      <Field label="Seller" htmlFor={`${layout}-seller`}>
+        <NativeSelect
+          id={`${layout}-seller`}
+          name="seller"
+          defaultValue={filters.seller ?? ""}
+          className="w-full [&_select]:h-11"
+          onChange={inline ? (event) => apply({ seller: event.target.value || undefined }) : undefined}
+        >
+          <NativeSelectOption value="">All sellers</NativeSelectOption>
+          {filters.seller && !sellers.some((seller) => seller.id === filters.seller) && (
+            <NativeSelectOption value={filters.seller}>Unavailable seller</NativeSelectOption>
+          )}
+          {sellers.map((seller) => (
+            <NativeSelectOption key={seller.id} value={seller.id}>
+              {seller.name}
+            </NativeSelectOption>
+          ))}
+        </NativeSelect>
+      </Field>
       <Field label="Region" htmlFor={`${layout}-region`}>
         <NativeSelect
           id={`${layout}-region`}
@@ -189,7 +214,7 @@ function FilterForm({
           variant="ghost"
           className="h-11"
           onClick={() => {
-            apply({ region: undefined, availability: undefined, min: undefined, max: undefined, exchange: undefined });
+            apply({ seller: undefined, region: undefined, availability: undefined, min: undefined, max: undefined, exchange: undefined });
             onApplied?.();
           }}
         >

@@ -22,7 +22,7 @@ export function ApplyForm() {
   const form = useForm<ApplicationInput>({
     resolver: zodResolver(applicationSchema),
     mode: "onTouched",
-    defaultValues: { fullName: "", email: "", whatsappNumber: "", contactNumber: "" },
+    defaultValues: { fullName: "", email: "", whatsappNumber: "", whatsappGroupUrl: "", contactNumber: "" },
   });
   const { errors } = form.formState;
 
@@ -107,6 +107,25 @@ export function ApplyForm() {
           />
         </FormField>
       </div>
+      <FormField
+        label="WhatsApp group link"
+        htmlFor="whatsappGroupUrl"
+        hint="Paste the invite link for the group shown in your screenshot."
+        error={errors.whatsappGroupUrl?.message}
+      >
+        <Input
+          id="whatsappGroupUrl"
+          type="url"
+          inputMode="url"
+          placeholder="https://chat.whatsapp.com/…"
+          autoCapitalize="none"
+          spellCheck={false}
+          required
+          className="h-11"
+          aria-invalid={!!errors.whatsappGroupUrl}
+          {...form.register("whatsappGroupUrl")}
+        />
+      </FormField>
       <FormField label="WhatsApp group screenshot" htmlFor="screenshot">
         <ImagePicker
           id="screenshot"

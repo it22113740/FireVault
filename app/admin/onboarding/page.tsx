@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { SkeletonForm } from "@/components/skeletons";
 import { requireRole } from "@/lib/auth";
 import { SITE_URL } from "@/lib/site";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { slugify } from "@/lib/validations/shop";
 import { ShopForm } from "../shop/shop-form";
 
@@ -26,6 +27,15 @@ export default function OnboardingPage() {
 
 async function Onboarding() {
   const profile = await requireRole("sales_admin");
+  // Applications are private; read only this authenticated seller's approved link.
+  const { data: application } = await createAdminClient()
+    .from("sales_admin_applications")
+    .select("whatsapp_group_url")
+    .eq("user_id", profile.id)
+    .eq("status", "approved")
+    .order("reviewed_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
   return (
     <ShopForm
       onboarding
@@ -34,7 +44,7 @@ async function Onboarding() {
         displayName: profile.full_name,
         slug: slugify(profile.full_name),
         description: "",
-        whatsappGroupUrl: "",
+        whatsappGroupUrl: application?.whatsapp_group_url ?? "",
         tiktokUrl: "",
         facebookUrl: "",
         totalSold: "0",
