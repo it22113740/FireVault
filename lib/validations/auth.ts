@@ -7,6 +7,26 @@ export const loginSchema = z.object({
 });
 export type LoginInput = z.input<typeof loginSchema>;
 
+export const signupSchema = z
+  .object({
+    fullName: z.string().trim().min(2, "Enter your name").max(100, "Name is too long"),
+    email: emailSchema,
+    password: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((value) => value.password === value.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+export type SignupInput = z.input<typeof signupSchema>;
+
+// Only same-site paths, never "//evil.com"
+export function safeNextPath(next: unknown, fallback = "/") {
+  return typeof next === "string" && next.startsWith("/") && !next.startsWith("//")
+    ? next
+    : fallback;
+}
+
 export const forgotPasswordSchema = z.object({ email: emailSchema });
 export type ForgotPasswordInput = z.input<typeof forgotPasswordSchema>;
 

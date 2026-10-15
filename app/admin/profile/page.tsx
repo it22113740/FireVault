@@ -1,10 +1,11 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { ChangePasswordForm } from "@/components/change-password-form";
 import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireStaff } from "@/lib/auth";
 import { ROLE_LABELS } from "@/lib/roles";
-import { ChangePasswordForm, ContactDetailsForm } from "./profile-forms";
+import { ContactDetailsForm } from "./profile-forms";
 
 export const metadata: Metadata = { title: "Profile" };
 

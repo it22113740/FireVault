@@ -1,4 +1,4 @@
-// Mirrors supabase/migrations/ (through 20261016000000_sales_admin_expiry.sql) in the format
+// Mirrors supabase/migrations/ (through 20261018000100_sellers_and_feedback.sql) in the format
 // produced by `supabase gen types typescript`. After applying migrations,
 // regenerate with:
 //   npx supabase gen types typescript --linked > lib/database.types.ts
@@ -241,6 +241,110 @@ export type Database = {
           },
         ];
       };
+      seller_feedback: {
+        Row: {
+          comment: string | null;
+          created_at: string;
+          customer_id: string;
+          id: string;
+          rating: number | null;
+          reaction: Database["public"]["Enums"]["reaction"] | null;
+          reviewer_name: string;
+          seller_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          comment?: string | null;
+          created_at?: string;
+          customer_id: string;
+          id?: string;
+          rating?: number | null;
+          reaction?: Database["public"]["Enums"]["reaction"] | null;
+          reviewer_name?: string;
+          seller_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          comment?: string | null;
+          created_at?: string;
+          customer_id?: string;
+          id?: string;
+          rating?: number | null;
+          reaction?: Database["public"]["Enums"]["reaction"] | null;
+          reviewer_name?: string;
+          seller_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "seller_feedback_customer_id_fkey";
+            columns: ["customer_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "seller_feedback_seller_id_fkey";
+            columns: ["seller_id"];
+            isOneToOne: false;
+            referencedRelation: "seller_profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      seller_profiles: {
+        Row: {
+          cover_path: string;
+          created_at: string;
+          description: string;
+          display_name: string;
+          facebook_url: string | null;
+          id: string;
+          logo_path: string;
+          slug: string;
+          tiktok_url: string | null;
+          total_sold: number;
+          updated_at: string;
+          whatsapp_group_url: string | null;
+        };
+        Insert: {
+          cover_path?: string;
+          created_at?: string;
+          description?: string;
+          display_name: string;
+          facebook_url?: string | null;
+          id: string;
+          logo_path?: string;
+          slug: string;
+          tiktok_url?: string | null;
+          total_sold?: number;
+          updated_at?: string;
+          whatsapp_group_url?: string | null;
+        };
+        Update: {
+          cover_path?: string;
+          created_at?: string;
+          description?: string;
+          display_name?: string;
+          facebook_url?: string | null;
+          id?: string;
+          logo_path?: string;
+          slug?: string;
+          tiktok_url?: string | null;
+          total_sold?: number;
+          updated_at?: string;
+          whatsapp_group_url?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "seller_profiles_id_fkey";
+            columns: ["id"];
+            isOneToOne: true;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       topups: {
         Row: {
           category: Database["public"]["Enums"]["topup_category"];
@@ -305,13 +409,40 @@ export type Database = {
           price: number | null;
           published_at: string | null;
           region: string | null;
+          seller_id: string | null;
+          seller_logo_path: string | null;
+          seller_name: string | null;
+          seller_slug: string | null;
           title: string | null;
           whatsapp_number: string | null;
         };
         Relationships: [];
       };
+      seller_directory: {
+        Row: {
+          cover_path: string | null;
+          created_at: string | null;
+          description: string | null;
+          dislikes: number | null;
+          display_name: string | null;
+          facebook_url: string | null;
+          id: string | null;
+          likes: number | null;
+          live_listings: number | null;
+          logo_path: string | null;
+          rating_avg: number | null;
+          rating_count: number | null;
+          review_count: number | null;
+          slug: string | null;
+          tiktok_url: string | null;
+          total_sold: number | null;
+          whatsapp_group_url: string | null;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
+      is_active_customer: { Args: never; Returns: boolean };
       is_active_sales_admin: { Args: never; Returns: boolean };
       is_super_admin: { Args: never; Returns: boolean };
     };
@@ -319,9 +450,10 @@ export type Database = {
       application_status: "pending" | "approved" | "denied";
       availability: "available" | "reserved";
       publish_status: "draft" | "pending_review" | "published" | "rejected" | "archived";
+      reaction: "like" | "dislike";
       topup_category: "membership" | "vip_bundle" | "diamonds";
       topup_status: "draft" | "published";
-      user_role: "super_admin" | "sales_admin";
+      user_role: "super_admin" | "sales_admin" | "customer";
     };
     CompositeTypes: {
       [_ in never]: never;

@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { FlameIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { AccountLink } from "@/components/account-link";
 import { MobileNav } from "@/components/mobile-nav";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PUBLIC_NAV, SELLER_CTA } from "@/lib/nav";
 
 export function Logo() {
@@ -31,16 +33,23 @@ export function SiteHeader() {
               {label}
             </Link>
           ))}
-          <Button
-            size="lg"
-            variant="outline"
-            render={<Link href={SELLER_CTA.href} />}
-            nativeButton={false}
+          <Link
+            href={SELLER_CTA.href}
+            className="text-muted-foreground transition-colors hover:text-foreground"
           >
             {SELLER_CTA.label}
-          </Button>
+          </Link>
+          <Suspense fallback={<Skeleton className="h-9 w-32" />}>
+            <AccountLink />
+          </Suspense>
         </nav>
-        <MobileNav />
+        <MobileNav
+          account={
+            <Suspense fallback={null}>
+              <AccountLink variant="menu" />
+            </Suspense>
+          }
+        />
       </div>
     </header>
   );

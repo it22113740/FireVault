@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import type { Tables } from "@/lib/database.types";
-import type { Role } from "@/lib/roles";
+import { homeFor, type Role } from "@/lib/roles";
 import { hasActiveAccess } from "@/lib/sales-admin-access";
 import { createClient } from "@/lib/supabase/server";
 
@@ -23,15 +23,20 @@ export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
   return profile;
 });
 
-// Guard for admin pages and every Server Action. proxy.ts is only the first
-// line of defence; this re-checks role and active access on the server.
+// Guard for pages and every Server Action. proxy.ts is only the first line of
+// defence; this re-checks role and active access on the server. With no roles
+// given, any active signed-in user passes.
 export async function requireRole(...roles: Role[]): Promise<Profile> {
   const profile = await getCurrentProfile();
   if (!profile) redirect("/login");
-  if (!hasActiveAccess(profile)) redirect("/inactive");
-  if (roles.length > 0 && !roles.includes(profile.role)) redirect("/admin");
+  if (!hasActiveAccess(profile)) {
+    redirect(profile.role === "customer" ? "/login?blocked=1" : "/inactive");
+  }
+  if (roles.length > 0 && !roles.includes(profile.role)) redirect(homeFor(profile.role));
   return profile;
 }
 
+export const requireUser = () => requireRole();
 export const requireStaff = () => requireRole("super_admin", "sales_admin");
 export const requireSuperAdmin = () => requireRole("super_admin");
+export const requireCustomer = () => requireRole("customer");

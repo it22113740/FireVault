@@ -7,14 +7,9 @@ import { toast } from "sonner";
 import { FormField } from "@/components/form-field";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
-import { changePassword, updateContactDetails } from "@/lib/actions/settings";
+import { updateContactDetails } from "@/lib/actions/settings";
 import { showActionError } from "@/lib/forms";
-import {
-  changePasswordSchema,
-  contactDetailsSchema,
-  type ChangePasswordInput,
-  type ContactDetailsInput,
-} from "@/lib/validations/settings";
+import { contactDetailsSchema, type ContactDetailsInput } from "@/lib/validations/settings";
 
 export function ContactDetailsForm({ defaults }: { defaults: ContactDetailsInput }) {
   const [pending, startTransition] = useTransition();
@@ -63,63 +58,6 @@ export function ContactDetailsForm({ defaults }: { defaults: ContactDetailsInput
       </FormField>
       <SubmitButton size="lg" className="h-11 w-fit" pending={pending} pendingLabel="Saving…">
         Save details
-      </SubmitButton>
-    </form>
-  );
-}
-
-export function ChangePasswordForm() {
-  const [pending, startTransition] = useTransition();
-  const form = useForm<ChangePasswordInput>({
-    resolver: zodResolver(changePasswordSchema),
-    mode: "onTouched",
-    defaultValues: { currentPassword: "", password: "", confirmPassword: "" },
-  });
-  const { errors } = form.formState;
-
-  const onSubmit = form.handleSubmit((values) =>
-    startTransition(async () => {
-      const result = await changePassword(values);
-      if (!result.ok) return showActionError(result, form.setError);
-      form.reset();
-      toast.success("Password changed.");
-    })
-  );
-
-  return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
-      <FormField label="Current password" htmlFor="currentPassword" error={errors.currentPassword?.message}>
-        <Input
-          id="currentPassword"
-          type="password"
-          autoComplete="current-password"
-          className="h-11"
-          aria-invalid={!!errors.currentPassword}
-          {...form.register("currentPassword")}
-        />
-      </FormField>
-      <FormField label="New password" htmlFor="password" error={errors.password?.message}>
-        <Input
-          id="password"
-          type="password"
-          autoComplete="new-password"
-          className="h-11"
-          aria-invalid={!!errors.password}
-          {...form.register("password")}
-        />
-      </FormField>
-      <FormField label="Confirm new password" htmlFor="confirmPassword" error={errors.confirmPassword?.message}>
-        <Input
-          id="confirmPassword"
-          type="password"
-          autoComplete="new-password"
-          className="h-11"
-          aria-invalid={!!errors.confirmPassword}
-          {...form.register("confirmPassword")}
-        />
-      </FormField>
-      <SubmitButton size="lg" className="h-11 w-fit" pending={pending} pendingLabel="Changing…">
-        Change password
       </SubmitButton>
     </form>
   );

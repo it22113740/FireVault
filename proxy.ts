@@ -1,12 +1,17 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "@/lib/database.types";
-import { isSuperAdminOnlyPath } from "@/lib/roles";
+import { homeFor, isPublicPath, isSuperAdminOnlyPath } from "@/lib/roles";
 import { hasActiveAccess } from "@/lib/sales-admin-access";
 
-// Auth + role + active-access gate (PLAN.md "Inactive sales admins"). Runs on
-// every /admin request, so deactivating someone takes effect on their next
-// click. Pages and actions re-check with requireRole().
+const ONBOARDING_PATH = "/admin/onboarding";
+
+// Runs on every page request:
+//  * the whole site needs an account, except the pages in isPublicPath()
+//  * blocked customers and inactive/expired sales admins are signed out
+//  * customers can't open /admin; sales admins can't open super-admin pages
+//  * sales admins must create their shop profile before using /admin
+// Pages and actions re-check with requireRole().
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -36,32 +41,44 @@ export async function proxy(request: NextRequest) {
   const { data: profile } = userId
     ? await supabase.from("profiles").select("role, is_active, active_until").eq("id", userId).maybeSingle()
     : { data: null };
+  const { pathname, search } = request.nextUrl;
 
-  // Deactivated, or their month of access has run out
-  const inactive = !!profile && !hasActiveAccess(profile);
-  const { pathname } = request.nextUrl;
+  if (!profile) {
+    // A login without a profile (e.g. a half-finished approval) is signed out
+    if (userId) await supabase.auth.signOut();
+    if (isPublicPath(pathname)) return response;
+    const next = encodeURIComponent(`${pathname}${search}`);
+    return redirectTo(pathname === "/" ? "/login" : `/login?next=${next}`, request, response);
+  }
+
+  if (!hasActiveAccess(profile)) {
+    await supabase.auth.signOut();
+    if (profile.role === "customer") {
+      return pathname === "/login" ? response : redirectTo("/login?blocked=1", request, response);
+    }
+    return pathname === "/inactive" ? response : redirectTo("/inactive", request, response);
+  }
+
+  if (pathname === "/login" || pathname === "/signup") {
+    return redirectTo(homeFor(profile.role), request, response);
+  }
 
   if (pathname.startsWith("/admin")) {
-    if (!profile) {
-      if (userId) await supabase.auth.signOut();
-      return redirectTo("/login", request, response);
+    if (profile.role === "customer") return redirectTo("/", request, response);
+    if (profile.role === "sales_admin") {
+      if (isSuperAdminOnlyPath(pathname)) return redirectTo("/admin", request, response);
+      const { data: shop } = await supabase
+        .from("seller_profiles")
+        .select("id")
+        .eq("id", userId!)
+        .maybeSingle();
+      if (!shop && pathname !== ONBOARDING_PATH) {
+        return redirectTo(ONBOARDING_PATH, request, response);
+      }
+      if (shop && pathname === ONBOARDING_PATH) return redirectTo("/admin/shop", request, response);
     }
-    if (inactive) {
-      await supabase.auth.signOut();
-      return redirectTo("/inactive", request, response);
-    }
-    if (profile.role !== "super_admin" && isSuperAdminOnlyPath(pathname)) {
-      return redirectTo("/admin", request, response);
-    }
-    return response;
   }
 
-  if (pathname === "/login" && profile && !inactive) {
-    return redirectTo("/admin", request, response);
-  }
-  if (pathname === "/inactive" && inactive) {
-    await supabase.auth.signOut();
-  }
   return response;
 }
 
@@ -73,5 +90,6 @@ function redirectTo(path: string, request: NextRequest, response: NextResponse) 
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/login", "/inactive"],
+  // Every page; skips Next's assets and static files in /public
+  matcher: ["/((?!_next/|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml)$).*)"],
 };

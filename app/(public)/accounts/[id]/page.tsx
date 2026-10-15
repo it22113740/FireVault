@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeftIcon, Gamepad2Icon, MapPinIcon, ShieldCheckIcon } from "lucide-react";
 import { CopyIdButton } from "@/components/copy-id-button";
+import { SellerLogo } from "@/components/seller-card";
 import { FadeIn } from "@/components/motion";
 import { AvailabilityBadge } from "@/components/status-badge";
 import { WhatsAppButton } from "@/components/whatsapp-button";
@@ -93,6 +94,20 @@ async function AccountDetail({ params }: { params: Props["params"] }) {
             </p>
           )}
         </div>
+
+        {listing.seller && (
+          <Link
+            href={`/sellers/${listing.seller.slug}`}
+            className="flex items-center gap-3 rounded-xl border bg-card p-3 transition-colors hover:border-primary/50"
+          >
+            <SellerLogo url={listing.seller.logoUrl} name={listing.seller.name} className="size-11" />
+            <span className="min-w-0 flex-1">
+              <span className="block text-xs text-muted-foreground">Sold by</span>
+              <span className="block truncate font-medium">{listing.seller.name}</span>
+            </span>
+            <span className="text-sm text-primary">Ratings &amp; reviews</span>
+          </Link>
+        )}
 
         <CopyIdButton value={shortId(listing.id)} />
 

@@ -12,9 +12,11 @@ export function accessExpiryFromNow(now = new Date()) {
 
 type AccessFields = Pick<Tables<"profiles">, "role" | "is_active" | "active_until">;
 
-// Super admins never expire; sales admins need is_active and an unexpired month
+// Super admins never expire; customers are active unless blocked; sales admins
+// need is_active and an unexpired month
 export function hasActiveAccess(profile: AccessFields, now = new Date()) {
-  if (profile.role !== "sales_admin") return true;
+  if (profile.role === "super_admin") return true;
+  if (profile.role === "customer") return profile.is_active;
   return profile.is_active && !!profile.active_until && new Date(profile.active_until) > now;
 }
 

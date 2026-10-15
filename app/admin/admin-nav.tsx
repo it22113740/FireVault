@@ -10,8 +10,10 @@ import {
   ListIcon,
   MenuIcon,
   SettingsIcon,
+  StoreIcon,
   UserCircleIcon,
   UserPlusIcon,
+  UserRoundIcon,
   UsersIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -24,13 +26,16 @@ type NavItem = { href: string; label: string; icon: LucideIcon; roles: Role[] };
 
 const BOTH: Role[] = ["super_admin", "sales_admin"];
 const SUPER: Role[] = ["super_admin"];
+const SELLER: Role[] = ["sales_admin"];
 
 const NAV: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboardIcon, roles: BOTH },
+  { href: "/admin/shop", label: "My shop", icon: StoreIcon, roles: SELLER },
   { href: "/admin/listings", label: "Listings", icon: ListIcon, roles: BOTH },
   { href: "/admin/review", label: "Review queue", icon: ClipboardCheckIcon, roles: SUPER },
   { href: "/admin/applications", label: "Applications", icon: UserPlusIcon, roles: SUPER },
   { href: "/admin/sales-admins", label: "Sales admins", icon: UsersIcon, roles: SUPER },
+  { href: "/admin/customers", label: "Customers", icon: UserRoundIcon, roles: SUPER },
   { href: "/admin/top-ups", label: "Top-ups", icon: GemIcon, roles: SUPER },
   { href: "/admin/settings", label: "Settings", icon: SettingsIcon, roles: SUPER },
   { href: "/admin/profile", label: "Profile", icon: UserCircleIcon, roles: BOTH },

@@ -29,6 +29,8 @@ export const settingsSchema = z.object({
 export type SettingsInput = z.input<typeof settingsSchema>;
 export type SettingsOutput = z.output<typeof settingsSchema>;
 
+export const nameSchema = z.string().trim().min(2, "Enter your name").max(100, "Name is too long");
+
 export const contactDetailsSchema = z.object({
   whatsappNumber: phoneSchema,
   contactNumber: phoneSchema,

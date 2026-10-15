@@ -21,7 +21,12 @@ export type AuditAction =
   | "topup.publish"
   | "topup.unpublish"
   | "topup.delete"
-  | "settings.update";
+  | "settings.update"
+  | "shop.create"
+  | "shop.update"
+  | "customer.block"
+  | "customer.unblock"
+  | "feedback.delete";
 
 // Written as the acting user (RLS: actor_id must be auth.uid()). Best effort:
 // a failed audit write is reported but never undoes the action itself.

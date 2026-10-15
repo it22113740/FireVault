@@ -24,6 +24,8 @@ export type PublicListing = {
   availability: Availability;
   publishedAt: string | null;
   whatsappNumber: string | null;
+  // The seller's shop; null for the super admin's own listings
+  seller: { name: string; slug: string; logoUrl: string } | null;
 };
 
 export type PublicTopup = {
@@ -76,6 +78,9 @@ type ViewRow = {
   availability: Availability | null;
   published_at: string | null;
   whatsapp_number: string | null;
+  seller_name: string | null;
+  seller_slug: string | null;
+  seller_logo_path: string | null;
 };
 
 function toPublicListing(row: ViewRow): PublicListing {
@@ -89,6 +94,10 @@ function toPublicListing(row: ViewRow): PublicListing {
     availability: row.availability ?? "available",
     publishedAt: row.published_at,
     whatsappNumber: row.whatsapp_number || null,
+    seller:
+      row.seller_slug && row.seller_name
+        ? { name: row.seller_name, slug: row.seller_slug, logoUrl: publicImageUrl(row.seller_logo_path) }
+        : null,
   };
 }
 
@@ -137,6 +146,27 @@ async function getLatestListingsCached(limit: number) {
     .eq("availability", "available")
     .order("published_at", { ascending: false })
     .limit(limit);
+  if (error) throw new Error(`Failed to load listings: ${error.message}`);
+  return (data ?? []).map(toPublicListing);
+}
+
+export async function getSellerListings(sellerId: string) {
+  await connection();
+  return getSellerListingsCached(sellerId);
+}
+
+async function getSellerListingsCached(sellerId: string) {
+  "use cache";
+  cacheTag(CACHE_TAGS.listings);
+  cacheLife("hours");
+
+  const { data, error } = await createPublicClient()
+    .from("published_listings")
+    .select("*")
+    .eq("seller_id", sellerId)
+    .order("availability")
+    .order("published_at", { ascending: false })
+    .limit(48);
   if (error) throw new Error(`Failed to load listings: ${error.message}`);
   return (data ?? []).map(toPublicListing);
 }

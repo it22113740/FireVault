@@ -3,12 +3,13 @@
 import { updateTag } from "next/cache";
 import { fail, invalid, ok, type ActionResult } from "@/lib/actions/result";
 import { logAudit } from "@/lib/audit";
-import { requireStaff, requireSuperAdmin } from "@/lib/auth";
+import { requireStaff, requireSuperAdmin, requireUser } from "@/lib/auth";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { createClient } from "@/lib/supabase/server";
 import {
   changePasswordSchema,
   contactDetailsSchema,
+  nameSchema,
   settingsSchema,
   type ChangePasswordInput,
   type ContactDetailsInput,
@@ -64,7 +65,7 @@ export async function updateContactDetails(input: ContactDetailsInput): Promise<
 }
 
 export async function changePassword(input: ChangePasswordInput): Promise<ActionResult> {
-  const profile = await requireStaff();
+  const profile = await requireUser();
   const parsed = changePasswordSchema.safeParse(input);
   if (!parsed.success) return invalid(parsed.error);
 
@@ -90,5 +91,17 @@ export async function changePassword(input: ChangePasswordInput): Promise<Action
         : "Couldn't change your password. Please try again."
     );
   }
+  return ok();
+}
+
+// Customers can change the name shown on their reviews (new and edited ones)
+export async function updateMyName(fullName: string): Promise<ActionResult> {
+  const profile = await requireUser();
+  const parsed = nameSchema.safeParse(fullName);
+  if (!parsed.success) return fail(parsed.error.issues[0].message);
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("profiles").update({ full_name: parsed.data }).eq("id", profile.id);
+  if (error) return fail("Couldn't save your name. Please try again.");
   return ok();
 }

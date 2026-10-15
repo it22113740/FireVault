@@ -4,4 +4,6 @@ export const CACHE_TAGS = {
   listings: "listings",
   topups: "topups",
   settings: "settings",
+  // Seller shops and their feedback totals/reviews
+  sellers: "sellers",
 } as const;
