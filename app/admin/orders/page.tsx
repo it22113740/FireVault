@@ -88,7 +88,7 @@ async function Orders({ searchParams }: { searchParams: Props["searchParams"] })
         focusId={focusId}
         orders={sorted.map(({ customer, receipt_path, ...row }) => ({
           ...row,
-          customerName: customer?.full_name ?? "Deleted customer",
+          customerName: customer?.full_name ?? "Guest",
           customerEmail: customer?.email ?? null,
           receiptUrl: receiptUrls.get(receipt_path) ?? null,
         }))}

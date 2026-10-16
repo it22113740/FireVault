@@ -16,7 +16,7 @@ export function TopupCard({
   topup: PublicTopup;
   currency: string;
   whatsappNumber: string;
-  /** Customers get the Buy dialog; staff viewing the store only see WhatsApp */
+  /** Bank details and optional WhatsApp prefill for every visitor */
   buy?: { bank: BankDetails | null; defaultWhatsapp: string };
 }) {
   return (

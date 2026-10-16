@@ -92,7 +92,7 @@ export type Database = {
           closed_by: string | null;
           created_at: string;
           currency: string;
-          customer_id: string;
+          customer_id: string | null;
           id: string;
           player_uid: string;
           quantity: number;
@@ -109,7 +109,7 @@ export type Database = {
           closed_by?: string | null;
           created_at?: string;
           currency?: string;
-          customer_id: string;
+          customer_id: string | null;
           id?: string;
           player_uid: string;
           quantity: number;
@@ -126,7 +126,7 @@ export type Database = {
           closed_by?: string | null;
           created_at?: string;
           currency?: string;
-          customer_id?: string;
+          customer_id?: string | null;
           id?: string;
           player_uid?: string;
           quantity?: number;

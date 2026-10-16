@@ -4,11 +4,12 @@ import { refresh } from "next/cache";
 import { after } from "next/server";
 import { fail, invalid, ok, type ActionResult } from "@/lib/actions/result";
 import { logAudit } from "@/lib/audit";
-import { requireCustomer, requireSuperAdmin, type Profile } from "@/lib/auth";
+import { getCurrentProfile, requireSuperAdmin, type Profile } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
 import { formatPrice, shortId } from "@/lib/format";
 import { toWebp } from "@/lib/images";
 import { getSettings } from "@/lib/settings";
+import { hasActiveAccess } from "@/lib/sales-admin-access";
 import { SITE_URL } from "@/lib/site";
 import { RECEIPTS_BUCKET } from "@/lib/storage";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -33,7 +34,8 @@ type PlacedOrder = {
 // Buy dialog on /top-ups. The trigger fills in the name and price from the
 // live top-up, so the client can't change what it pays.
 export async function placeTopupOrder(formData: FormData): Promise<ActionResult<{ id: string }>> {
-  const customer = await requireCustomer();
+  const customer = await getCurrentProfile();
+  if (customer && !hasActiveAccess(customer)) return fail("Your account is inactive. Please contact the administrator.");
   const parsed = topupOrderSchema.safeParse({
     topupId: formData.get("topupId") ?? "",
     playerUid: formData.get("playerUid") ?? "",
@@ -46,15 +48,16 @@ export async function placeTopupOrder(formData: FormData): Promise<ActionResult<
   const settings = await getSettings();
   if (!settings.bank_account_number) return fail("Top-up payments aren't set up yet. Please message us on WhatsApp.");
 
-  const supabase = await createClient();
-  const { count } = await supabase
+  const supabase = createAdminClient();
+  const { count, error: countError } = await supabase
     .from("topup_orders")
     .select("id", { count: "exact", head: true })
-    .eq("customer_id", customer.id)
+    .eq("whatsapp_number", order.whatsappNumber)
     .gte("created_at", new Date(Date.now() - 60 * 60 * 1000).toISOString());
+  if (countError) return fail("Couldn't check your order. Please try again.");
   if ((count ?? 0) >= ORDERS_PER_HOUR) return fail("You've placed several orders already. Please try again in an hour.");
 
-  const image = await toWebp(formData.get("receipt"), { folder: customer.id });
+  const image = await toWebp(formData.get("receipt"), { folder: customer?.id ?? "guests" });
   if ("error" in image) return { ok: false, error: image.error, fieldErrors: { receipt: [image.error] } };
 
   // Private bucket with no insert policy: only the server writes receipts
@@ -65,7 +68,7 @@ export async function placeTopupOrder(formData: FormData): Promise<ActionResult<
   const { data: saved, error } = await supabase
     .from("topup_orders")
     .insert({
-      customer_id: customer.id,
+      customer_id: customer?.id ?? null,
       topup_id: order.topupId,
       player_uid: order.playerUid,
       quantity: order.quantity,
@@ -86,7 +89,7 @@ export async function placeTopupOrder(formData: FormData): Promise<ActionResult<
   return ok({ id: saved.id });
 }
 
-async function notifyNewOrder(order: PlacedOrder, customer: Profile, adminWhatsapp: string) {
+async function notifyNewOrder(order: PlacedOrder, customer: Profile | null, adminWhatsapp: string) {
   const link = `${SITE_URL}/admin/orders?order=${order.id}`;
   const item = `${order.topup_name} × ${order.quantity}`;
   const total = formatPrice(order.total, order.currency);
@@ -95,7 +98,7 @@ async function notifyNewOrder(order: PlacedOrder, customer: Profile, adminWhatsa
     `Item: ${item}`,
     `Total: ${total}`,
     `Player UID: ${order.player_uid}`,
-    `Customer: ${customer.full_name} (${customer.email})`,
+    customer ? `Customer: ${customer.full_name} (${customer.email})` : "Customer: Guest",
     `Customer WhatsApp: ${order.whatsapp_number}`,
     "",
     `Receipt and details: ${link}`,

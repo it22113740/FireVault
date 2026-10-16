@@ -47,21 +47,18 @@ async function Topups({ searchParams }: { searchParams: Props["searchParams"] })
   const category = parseTopupCategory((await searchParams).category) ?? "membership";
   const [topups, settings, viewer] = await Promise.all([getPublishedTopups(), getSettings(), getCurrentProfile()]);
   const shown = topups.filter((topup) => topup.category === category);
-  // Only customers buy; the bank account appears first in the Buy dialog
-  const buy =
-    viewer?.role === "customer"
+  // Everyone can buy; signed-in visitors get their WhatsApp pre-filled.
+  const buy = {
+    bank: settings.bank_account_number
       ? {
-          bank: settings.bank_account_number
-            ? {
-                accountName: settings.bank_account_name,
-                accountNumber: settings.bank_account_number,
-                bankName: settings.bank_name,
-                branch: settings.bank_branch,
-              }
-            : null,
-          defaultWhatsapp: viewer.whatsapp_number ?? "",
+          accountName: settings.bank_account_name,
+          accountNumber: settings.bank_account_number,
+          bankName: settings.bank_name,
+          branch: settings.bank_branch,
         }
-      : undefined;
+      : null,
+    defaultWhatsapp: viewer?.whatsapp_number ?? "",
+  };
 
   return (
     <div className="flex flex-col gap-6">
