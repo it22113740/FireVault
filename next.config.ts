@@ -3,7 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   experimental: {
     agentFeedback: true,
-    // Only the public /apply screenshot (max 4 MB, lib/images.ts) is sent in
+    // Only the /apply screenshot and top-up order receipts (max 4 MB,
+    // lib/images.ts; receipts are shrunk in the browser first) are sent in
     // an action body; this leaves room for multipart overhead under Vercel's
     // 4.5 MB request limit. Staff images (up to 30 MB) are staged in Storage.
     serverActions: {

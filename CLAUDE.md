@@ -35,6 +35,22 @@ UI/UX rules. Read the relevant section before changing anything.
     `/sellers/[slug]`.
   - Customers leave one feedback per seller (`seller_feedback`: like/dislike,
     1–5 stars, review). Totals come from the `seller_directory` view.
+  - Listing sellers: a super admin files a listing under seller shops. One
+    shop = that seller owns it (`created_by`); several = a shared listing
+    the super admin owns, with the shops in `listing_sellers`. Shared
+    listings show on every shop, buyers choose which seller to WhatsApp, and
+    any of those sellers can mark it Reserved
+    (`set_shared_listing_availability()`). `published_listings.seller_ids`/
+    `sellers` cover both cases.
+  - Top-up orders (`topup_orders`): customers buy from the Buy dialog on
+    `/top-ups` (bank details from `app_settings.bank_*`, player UID,
+    quantity 1–5, WhatsApp, receipt in the private `receipts` bucket). A
+    trigger copies name/price from the live top-up. The super admin is
+    alerted on WhatsApp via Twilio (`lib/twilio.ts`) plus email, and closes
+    orders on `/admin/orders`.
+  - Game updates (`game_updates`, image only, 1920 × 1080 = `UPDATE_IMAGE_SIZE`
+    in `lib/game-updates.ts`): super admin posts on `/admin/updates`, public
+    page `/updates`. Named "Game updates", not "FF", per the trademark rule.
   - Staff images (listings, top-ups, shop logo/cover) up to 30 MB are staged
     in the private `uploads` bucket and converted to WebP by the action
     (`lib/stage-image.ts` → `stagedToWebp()`).

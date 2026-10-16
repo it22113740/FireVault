@@ -29,6 +29,10 @@ export async function updateSettings(input: SettingsInput): Promise<ActionResult
       currency: parsed.data.currency,
       inactive_message: parsed.data.inactiveMessage,
       regions: parsed.data.regions,
+      bank_account_name: parsed.data.bankAccountName,
+      bank_account_number: parsed.data.bankAccountNumber,
+      bank_name: parsed.data.bankName,
+      bank_branch: parsed.data.bankBranch,
     })
     .eq("id", 1);
   if (error) return fail("Couldn't save the settings. Please try again.");

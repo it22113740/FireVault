@@ -30,12 +30,13 @@ async function Dashboard() {
 async function SuperAdminStats() {
   const supabase = await createClient();
   const head = { count: "exact", head: true } as const;
-  const [review, applications, live, topups, settings] = await Promise.all([
+  const [review, applications, live, topups, settings, orders] = await Promise.all([
     supabase.from("listings").select("id", head).eq("publish_status", "pending_review"),
     supabase.from("sales_admin_applications").select("id", head).eq("status", "pending"),
     supabase.from("listings").select("id", head).eq("publish_status", "published"),
     supabase.from("topups").select("id", head).eq("status", "published"),
-    supabase.from("app_settings").select("admin_whatsapp").eq("id", 1).single(),
+    supabase.from("app_settings").select("admin_whatsapp, bank_account_number").eq("id", 1).single(),
+    supabase.from("topup_orders").select("id", head).eq("status", "open"),
   ]);
 
   return (
@@ -50,8 +51,19 @@ async function SuperAdminStats() {
           top-ups or your own listings.
         </Link>
       )}
+      {settings.data && !settings.data.bank_account_number && (
+        <Link
+          href="/admin/settings"
+          className="flex items-center gap-3 rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm"
+        >
+          <TriangleAlertIcon className="size-5 shrink-0 text-warning" />
+          Add your bank account in Settings so customers can buy top-ups. Until then, the Buy window
+          asks them to message you on WhatsApp.
+        </Link>
+      )}
       <StatGrid
         stats={[
+          { label: "Open top-up orders", href: "/admin/orders", count: orders.count, attention: true },
           { label: "Pending reviews", href: "/admin/review", count: review.count, attention: true },
           { label: "Pending applications", href: "/admin/applications", count: applications.count, attention: true },
           { label: "Live listings", href: "/admin/listings?status=published", count: live.count },
@@ -117,8 +129,8 @@ function AccessNotice({ activeUntil }: { activeUntil: string }) {
 
 function StatGrid({ stats }: { stats: Stat[] }) {
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      {stats.map((stat) => {
+    <div className={cn("grid grid-cols-2 gap-3", stats.length === 5 ? "lg:grid-cols-5" : "lg:grid-cols-4")}>
+      {stats.map((stat, index) => {
         const highlight = stat.attention && (stat.count ?? 0) > 0;
         return (
           <Link
@@ -126,7 +138,9 @@ function StatGrid({ stats }: { stats: Stat[] }) {
             href={stat.href}
             className={cn(
               "rounded-xl border bg-card p-4 transition duration-200 hover:border-primary/50 md:hover:-translate-y-1",
-              highlight && "border-primary/50"
+              highlight && "border-primary/50",
+              // Odd count: the first tile spans the row on phones so none sits alone
+              stats.length % 2 === 1 && index === 0 && "col-span-2 lg:col-span-1"
             )}
           >
             <p className={cn("font-heading text-3xl font-bold tabular-nums", highlight && "text-primary")}>

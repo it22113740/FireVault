@@ -41,8 +41,10 @@ export default function AdminSellerListingPage({ params }: Props) {
 async function ListingDetail({ params }: { params: Props["params"] }) {
   const [{ slug, id }] = await Promise.all([params, requireStaff()]);
   const [listing, settings] = await Promise.all([getPublishedListing(id), getSettings()]);
-  if (!listing || listing.seller?.slug !== slug) notFound();
-  const { seller } = listing;
+  // Shared listings open from any of their shops
+  const seller = listing?.sellers.find((item) => item.slug === slug);
+  if (!listing || !seller) notFound();
+  const others = listing.sellers.filter((item) => item.id !== seller.id);
 
   return (
     <div className="flex flex-col gap-4">
@@ -98,6 +100,20 @@ async function ListingDetail({ params }: { params: Props["params"] }) {
             </span>
             <span className="text-sm text-primary">Seller details</span>
           </Link>
+          {others.length > 0 && (
+            <p className="text-sm text-muted-foreground">
+              Shared listing, also sold by{" "}
+              {others.map((other, index) => (
+                <span key={other.id}>
+                  {index > 0 && ", "}
+                  <Link href={`/admin/sellers/${other.slug}`} className="text-primary hover:underline">
+                    {other.name}
+                  </Link>
+                </span>
+              ))}
+              .
+            </p>
+          )}
 
           <CopyIdButton value={shortId(listing.id)} />
 

@@ -1,5 +1,6 @@
 export const PUBLIC_IMAGES_BUCKET = "public-images";
 export const APPLICATIONS_BUCKET = "applications";
+export const RECEIPTS_BUCKET = "receipts";
 export const UPLOADS_BUCKET = "uploads";
 
 const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!.replace(/\/$/, "");

@@ -59,7 +59,10 @@ export async function saveListing(formData: FormData): Promise<ActionResult<Save
     price: String(formData.get("price") ?? ""),
     region: String(formData.get("region") ?? ""),
     exchangeAvailable: formData.get("exchangeAvailable") === "true",
-    sellerId: isSuperAdmin ? String(formData.get("sellerId") ?? "") : "",
+    // Sent as "id1,id2"; order is the order shops are shown in
+    sellerIds: isSuperAdmin
+      ? [...new Set(String(formData.get("sellerIds") ?? "").split(",").filter(Boolean))]
+      : [],
   };
   const parsed = listingFormSchema.safeParse(raw);
   if (!parsed.success) return invalid(parsed.error);
@@ -88,28 +91,31 @@ export async function saveListing(formData: FormData): Promise<ActionResult<Save
     return fail("Only drafts are autosaved.");
   }
 
-  // A super admin can file the listing under any seller's shop; the trigger
-  // lets only super admins set created_by
+  // A super admin can file the listing under seller shops; the trigger lets
+  // only super admins set created_by. One seller owns it outright; none or
+  // several keep it with a super admin (several = shared, in listing_sellers).
   let ownerId = existing?.created_by ?? profile.id;
-  if (isSuperAdmin && !values.sellerId && existing) {
-    // "FireVault": keep a listing that's already FireVault's with its owner;
-    // take one away from a seller's shop to this super admin
-    const { data: ownerShop } = await supabase
-      .from("seller_profiles")
-      .select("id")
-      .eq("id", existing.created_by)
-      .maybeSingle();
-    if (ownerShop) ownerId = profile.id;
-  } else if (isSuperAdmin && values.sellerId) {
-    const { data: shop } = await supabase
-      .from("seller_profiles")
-      .select("id")
-      .eq("id", values.sellerId)
-      .maybeSingle();
-    if (!shop) {
-      return { ok: false, error: "Choose a seller from the list.", fieldErrors: { sellerId: ["Choose a seller from the list"] } };
+  if (isSuperAdmin) {
+    if (values.sellerIds.length > 0) {
+      const { data: shops } = await supabase.from("seller_profiles").select("id").in("id", values.sellerIds);
+      if ((shops ?? []).length !== values.sellerIds.length) {
+        return { ok: false, error: "Choose sellers from the list.", fieldErrors: { sellerIds: ["Choose sellers from the list"] } };
+      }
     }
-    ownerId = shop.id;
+    if (values.sellerIds.length === 1) {
+      ownerId = values.sellerIds[0];
+    } else if (existing) {
+      // Keep a super admin's listing with its owner; take one away from a
+      // seller's shop to this super admin
+      const { data: ownerShop } = await supabase
+        .from("seller_profiles")
+        .select("id")
+        .eq("id", existing.created_by)
+        .maybeSingle();
+      if (ownerShop) ownerId = profile.id;
+    } else {
+      ownerId = profile.id;
+    }
   }
 
   const { data: settings } = await supabase.from("app_settings").select("regions").single();
@@ -191,6 +197,19 @@ export async function saveListing(formData: FormData): Promise<ActionResult<Save
     return fail("Couldn't save the listing. Please try again.");
   }
 
+  // Shared listings: replace the shop list (empty unless 2+ sellers chosen)
+  let sellersError = false;
+  if (isSuperAdmin) {
+    const shared = values.sellerIds.length > 1 ? values.sellerIds : [];
+    const { error: deleteError } = await supabase.from("listing_sellers").delete().eq("listing_id", saved.id);
+    const { error: insertError } = shared.length
+      ? await supabase
+          .from("listing_sellers")
+          .insert(shared.map((sellerId, position) => ({ listing_id: saved.id, seller_id: sellerId, position })))
+      : { error: null };
+    sellersError = !!(deleteError || insertError);
+  }
+
   if (uploadedPath && existing?.image_path && existing.image_path !== uploadedPath) {
     await supabase.storage.from(PUBLIC_IMAGES_BUCKET).remove([existing.image_path]);
   }
@@ -201,7 +220,7 @@ export async function saveListing(formData: FormData): Promise<ActionResult<Save
       profile.id,
       !existing ? "listing.create" : AUDIT_BY_INTENT[intent as Exclude<ListingIntent, "autosave">],
       saved.id,
-      { status: saved.publish_status, ...(isSuperAdmin ? { owner: ownerId } : {}) }
+      { status: saved.publish_status, ...(isSuperAdmin ? { owner: ownerId, sellers: values.sellerIds } : {}) }
     );
   }
   if (saved.publish_status === "published" || existing?.publish_status === "published") {
@@ -210,6 +229,7 @@ export async function saveListing(formData: FormData): Promise<ActionResult<Save
     updateTag(CACHE_TAGS.sellers);
   }
 
+  if (sellersError) return fail("The listing was saved, but its sellers couldn't be updated. Save it again.");
   return ok({ id: saved.id, status: saved.publish_status, imageUrl: publicImageUrl(imagePath) });
 }
 
@@ -225,7 +245,13 @@ export async function setAvailability(id: string, availability: Availability): P
     .eq("id", id)
     .select("id")
     .maybeSingle();
-  if (!data) return fail("You can't change this listing right now.");
+  // Not their own: a seller can still reserve a shared listing their shop is on
+  const changed =
+    !!data ||
+    (profile.role === "sales_admin" &&
+      (await supabase.rpc("set_shared_listing_availability", { p_listing_id: id, p_availability: availability }))
+        .data === true);
+  if (!changed) return fail("You can't change this listing right now.");
 
   await logAudit(profile.id, "listing.availability", id, { availability });
   updateTag(CACHE_TAGS.listings);

@@ -6,6 +6,7 @@ export const TOPUP_CATEGORIES: { value: TopupCategory; label: string }[] = [
   { value: "membership", label: "Membership" },
   { value: "vip_bundle", label: "VIP Bundle" },
   { value: "diamonds", label: "Diamonds" },
+  { value: "level_up_pass", label: "Level up pass" },
 ];
 
 export function topupCategoryLabel(category: TopupCategory) {

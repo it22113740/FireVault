@@ -7,13 +7,14 @@ import { StaggerItem } from "@/components/motion";
 import { SkeletonGrid } from "@/components/skeletons";
 import { TopupCard } from "@/components/topup-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getCurrentProfile } from "@/lib/auth";
 import { getSettings } from "@/lib/settings";
 import { getPublishedTopups } from "@/lib/store";
 import { TOPUP_CATEGORIES, parseTopupCategory, topupCategoryLabel } from "@/lib/topups";
 
 export const metadata: Metadata = {
   title: "Top-ups",
-  description: "Membership, VIP bundles and diamond packs. Order on WhatsApp.",
+  description: "Membership, VIP bundles, diamond packs and level up passes. Pay by bank transfer and order online.",
 };
 
 type Props = PageProps<"/top-ups">;
@@ -24,7 +25,8 @@ export default function TopupsPage({ searchParams }: Props) {
       <div>
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Top-ups</h1>
         <p className="mt-2 text-muted-foreground">
-          Pick a pack and order it on WhatsApp. We confirm the payment and deliver it manually.
+          Pick a pack, pay by bank transfer and send us the receipt. We check the payment and top up
+          your account, then message you on WhatsApp.
         </p>
       </div>
       <Suspense
@@ -43,8 +45,23 @@ export default function TopupsPage({ searchParams }: Props) {
 
 async function Topups({ searchParams }: { searchParams: Props["searchParams"] }) {
   const category = parseTopupCategory((await searchParams).category) ?? "membership";
-  const [topups, settings] = await Promise.all([getPublishedTopups(), getSettings()]);
+  const [topups, settings, viewer] = await Promise.all([getPublishedTopups(), getSettings(), getCurrentProfile()]);
   const shown = topups.filter((topup) => topup.category === category);
+  // Only customers buy; the bank account appears first in the Buy dialog
+  const buy =
+    viewer?.role === "customer"
+      ? {
+          bank: settings.bank_account_number
+            ? {
+                accountName: settings.bank_account_name,
+                accountNumber: settings.bank_account_number,
+                bankName: settings.bank_name,
+                branch: settings.bank_branch,
+              }
+            : null,
+          defaultWhatsapp: viewer.whatsapp_number ?? "",
+        }
+      : undefined;
 
   return (
     <div className="flex flex-col gap-6">
@@ -62,7 +79,12 @@ async function Topups({ searchParams }: { searchParams: Props["searchParams"] })
         <ul key={category} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {shown.map((topup, index) => (
             <StaggerItem key={topup.id} index={index} as="li">
-              <TopupCard topup={topup} currency={settings.currency} whatsappNumber={settings.admin_whatsapp} />
+              <TopupCard
+                topup={topup}
+                currency={settings.currency}
+                whatsappNumber={settings.admin_whatsapp}
+                buy={buy}
+              />
             </StaggerItem>
           ))}
         </ul>

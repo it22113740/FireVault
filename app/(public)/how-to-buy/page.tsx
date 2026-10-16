@@ -13,7 +13,7 @@ const STEPS = [
   {
     icon: MousePointerClickIcon,
     title: "Pick an account or top-up",
-    text: "Browse accounts by region and price, or choose a membership, VIP bundle or diamond pack.",
+    text: "Browse accounts by region and price, or choose a membership, VIP bundle, diamond pack or level up pass.",
   },
   {
     icon: MessageCircleIcon,

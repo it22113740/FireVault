@@ -1,4 +1,4 @@
-// Mirrors supabase/migrations/ (through 20261022000000_announcements.sql) in the format
+// Mirrors supabase/migrations/ (through 20261026000000_game_updates.sql) in the format
 // produced by `supabase gen types typescript`. After applying migrations,
 // regenerate with:
 //   npx supabase gen types typescript --linked > lib/database.types.ts
@@ -17,9 +17,19 @@ export type Database = {
         Update: { id?: string; title?: string; image_path?: string; published?: boolean; created_at?: string };
         Relationships: [];
       };
+      id_college_samples: {
+        Row: { slot: number; image_path: string; price: number };
+        Insert: { slot: number; image_path: string; price: number };
+        Update: { slot?: number; image_path?: string; price?: number };
+        Relationships: [];
+      };
       app_settings: {
         Row: {
           admin_whatsapp: string;
+          bank_account_name: string;
+          bank_account_number: string;
+          bank_branch: string;
+          bank_name: string;
           currency: string;
           id: number;
           inactive_message: string;
@@ -27,6 +37,10 @@ export type Database = {
         };
         Insert: {
           admin_whatsapp?: string;
+          bank_account_name?: string;
+          bank_account_number?: string;
+          bank_branch?: string;
+          bank_name?: string;
           currency?: string;
           id?: number;
           inactive_message?: string;
@@ -34,12 +48,119 @@ export type Database = {
         };
         Update: {
           admin_whatsapp?: string;
+          bank_account_name?: string;
+          bank_account_number?: string;
+          bank_branch?: string;
+          bank_name?: string;
           currency?: string;
           id?: number;
           inactive_message?: string;
           regions?: string[];
         };
         Relationships: [];
+      };
+      game_updates: {
+        Row: { created_at: string; id: string; image_path: string };
+        Insert: { created_at?: string; id?: string; image_path: string };
+        Update: { created_at?: string; id?: string; image_path?: string };
+        Relationships: [];
+      };
+      listing_sellers: {
+        Row: { listing_id: string; position: number; seller_id: string };
+        Insert: { listing_id: string; position?: number; seller_id: string };
+        Update: { listing_id?: string; position?: number; seller_id?: string };
+        Relationships: [
+          {
+            foreignKeyName: "listing_sellers_listing_id_fkey";
+            columns: ["listing_id"];
+            isOneToOne: false;
+            referencedRelation: "listings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "listing_sellers_seller_id_fkey";
+            columns: ["seller_id"];
+            isOneToOne: false;
+            referencedRelation: "seller_profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      topup_orders: {
+        Row: {
+          closed_at: string | null;
+          closed_by: string | null;
+          created_at: string;
+          currency: string;
+          customer_id: string;
+          id: string;
+          player_uid: string;
+          quantity: number;
+          receipt_path: string;
+          status: Database["public"]["Enums"]["topup_order_status"];
+          topup_id: string | null;
+          topup_name: string;
+          total: number;
+          unit_price: number;
+          whatsapp_number: string;
+        };
+        Insert: {
+          closed_at?: string | null;
+          closed_by?: string | null;
+          created_at?: string;
+          currency?: string;
+          customer_id: string;
+          id?: string;
+          player_uid: string;
+          quantity: number;
+          receipt_path: string;
+          status?: Database["public"]["Enums"]["topup_order_status"];
+          topup_id: string | null;
+          topup_name?: string;
+          total?: number;
+          unit_price?: number;
+          whatsapp_number: string;
+        };
+        Update: {
+          closed_at?: string | null;
+          closed_by?: string | null;
+          created_at?: string;
+          currency?: string;
+          customer_id?: string;
+          id?: string;
+          player_uid?: string;
+          quantity?: number;
+          receipt_path?: string;
+          status?: Database["public"]["Enums"]["topup_order_status"];
+          topup_id?: string | null;
+          topup_name?: string;
+          total?: number;
+          unit_price?: number;
+          whatsapp_number?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "topup_orders_customer_id_fkey";
+            columns: ["customer_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "topup_orders_closed_by_fkey";
+            columns: ["closed_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "topup_orders_topup_id_fkey";
+            columns: ["topup_id"];
+            isOneToOne: false;
+            referencedRelation: "topups";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       audit_logs: {
         Row: {
@@ -431,9 +552,11 @@ export type Database = {
           published_at: string | null;
           region: string | null;
           seller_id: string | null;
+          seller_ids: string[] | null;
           seller_logo_path: string | null;
           seller_name: string | null;
           seller_slug: string | null;
+          sellers: Json | null;
           title: string | null;
           whatsapp_number: string | null;
         };
@@ -458,6 +581,7 @@ export type Database = {
           tiktok_url: string | null;
           total_sold: number | null;
           whatsapp_group_url: string | null;
+          whatsapp_number: string | null;
         };
         Relationships: [];
       };
@@ -465,6 +589,10 @@ export type Database = {
     Functions: {
       is_active_customer: { Args: never; Returns: boolean };
       can_self_publish: { Args: never; Returns: boolean };
+      set_shared_listing_availability: {
+        Args: { p_availability: Database["public"]["Enums"]["availability"]; p_listing_id: string };
+        Returns: boolean;
+      };
       is_active_sales_admin: { Args: never; Returns: boolean };
       is_super_admin: { Args: never; Returns: boolean };
     };
@@ -473,7 +601,8 @@ export type Database = {
       availability: "available" | "reserved";
       publish_status: "draft" | "pending_review" | "published" | "rejected" | "archived";
       reaction: "like" | "dislike";
-      topup_category: "membership" | "vip_bundle" | "diamonds";
+      topup_category: "membership" | "vip_bundle" | "diamonds" | "level_up_pass";
+      topup_order_status: "open" | "closed";
       topup_status: "draft" | "published";
       user_role: "super_admin" | "sales_admin" | "customer";
     };

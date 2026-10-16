@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { saveListing } from "@/lib/actions/listings";
 import { showActionError } from "@/lib/forms";
 import { stageImage } from "@/lib/stage-image";
+import { cn } from "@/lib/utils";
 import { LISTING_IMAGE_SIZE, type PublishStatus } from "@/lib/listings";
 import type { SellerOption } from "@/lib/seller-options";
 import { formatPriceInput } from "@/lib/validations/common";
@@ -38,8 +39,8 @@ export type EditableListing = {
   price: number;
   region: string;
   exchange_available: boolean;
-  /** Owning seller shop, "" when it's FireVault's own (super admin) */
-  sellerId: string;
+  /** Shops it's listed under, in display order ([] = FireVault's own) */
+  sellerIds: string[];
   imageUrl: string;
   publish_status: PublishStatus;
   rejection_reason: string | null;
@@ -95,7 +96,7 @@ function ListingFormFields({ canPublish, sellers, regions, currency, listing }: 
       price: listing?.price ? formatPriceInput(String(listing.price)) : "",
       region: listing?.region ?? "",
       exchangeAvailable: listing?.exchange_available ?? false,
-      sellerId: listing?.sellerId ?? "",
+      sellerIds: listing?.sellerIds ?? [],
     },
   });
   const { errors, isDirty } = form.formState;
@@ -283,26 +284,18 @@ function ListingFormFields({ canPublish, sellers, regions, currency, listing }: 
           </FormField>
 
           {sellers && (
-            <FormField
-              label="Seller"
-              htmlFor="sellerId"
-              hint="Customers see this shop on the listing and message its WhatsApp. The seller can then manage it from their dashboard."
-              error={errors.sellerId?.message}
-            >
-              <NativeSelect
-                id="sellerId"
-                className="w-full [&_select]:h-11"
-                aria-invalid={!!errors.sellerId}
-                {...form.register("sellerId")}
-              >
-                <NativeSelectOption value="">FireVault (no seller shop)</NativeSelectOption>
-                {sellers.map((seller) => (
-                  <NativeSelectOption key={seller.id} value={seller.id}>
-                    {seller.active ? seller.name : `${seller.name} (inactive)`}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-            </FormField>
+            <Controller
+              control={form.control}
+              name="sellerIds"
+              render={({ field }) => (
+                <SellerPicker
+                  sellers={sellers}
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={errors.sellerIds?.message ?? errors.sellerIds?.root?.message}
+                />
+              )}
+            />
           )}
 
           <div className="grid gap-5 sm:grid-cols-2">
@@ -386,6 +379,73 @@ function ListingFormFields({ canPublish, sellers, regions, currency, listing }: 
         </div>
       </div>
     </form>
+  );
+}
+
+// Super admin: which shops the listing is shown under. Ticked order is the
+// order buyers see the sellers in.
+function SellerPicker({
+  sellers,
+  value,
+  onChange,
+  error,
+}: {
+  sellers: SellerOption[];
+  value: string[];
+  onChange: (value: string[]) => void;
+  error?: string;
+}) {
+  const names = value.map((id) => sellers.find((seller) => seller.id === id)?.name ?? "Unknown seller");
+  const hint =
+    value.length === 0
+      ? "None ticked: FireVault's own listing. Buyers message the admin WhatsApp."
+      : value.length === 1
+        ? `${names[0]} owns this listing: buyers message their WhatsApp and they manage it from their dashboard.`
+        : `Shared listing under ${value.length} shops. Buyers choose a seller to message. Only you can edit it; any of these sellers can mark it Reserved.`;
+
+  return (
+    <fieldset className="flex flex-col gap-2">
+      <legend className="mb-2 text-sm font-medium">Sellers</legend>
+      <ul
+        className={cn(
+          "flex max-h-56 flex-col divide-y overflow-y-auto rounded-xl border bg-card",
+          error && "border-destructive"
+        )}
+      >
+        {sellers.map((seller) => {
+          const position = value.indexOf(seller.id);
+          const checked = position !== -1;
+          return (
+            <li key={seller.id}>
+              <label className="flex min-h-11 cursor-pointer items-center gap-3 px-3 py-2 text-sm hover:bg-accent/50">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-primary"
+                  checked={checked}
+                  onChange={(event) =>
+                    onChange(
+                      event.target.checked ? [...value, seller.id] : value.filter((id) => id !== seller.id)
+                    )
+                  }
+                />
+                <span className="min-w-0 flex-1 truncate">
+                  {seller.name}
+                  {!seller.active && <span className="text-muted-foreground"> (inactive)</span>}
+                </span>
+                {checked && value.length > 1 && (
+                  <span className="text-xs text-muted-foreground tabular-nums">#{position + 1}</span>
+                )}
+              </label>
+            </li>
+          );
+        })}
+      </ul>
+      {error ? (
+        <p className="text-sm text-destructive">{error}</p>
+      ) : (
+        <p className="text-xs text-muted-foreground">{hint}</p>
+      )}
+    </fieldset>
   );
 }
 

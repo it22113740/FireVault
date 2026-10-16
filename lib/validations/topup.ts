@@ -14,7 +14,7 @@ export const topupFormSchema = z.object({
     .trim()
     .max(TOPUP_LIMITS.description, `Keep the description under ${TOPUP_LIMITS.description} characters`),
   price: priceInputSchema,
-  category: z.enum(["membership", "vip_bundle", "diamonds"], { error: "Choose a category" }),
+  category: z.enum(["membership", "vip_bundle", "diamonds", "level_up_pass"], { error: "Choose a category" }),
 });
 export type TopupFormValues = z.input<typeof topupFormSchema>;
 

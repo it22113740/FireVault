@@ -27,6 +27,8 @@ export const SUPER_ADMIN_ONLY_PATHS = [
   "/admin/sales-admins",
   "/admin/customers",
   "/admin/top-ups",
+  "/admin/orders",
+  "/admin/updates",
   "/admin/settings",
 ];
 

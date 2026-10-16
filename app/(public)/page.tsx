@@ -1,4 +1,7 @@
 import { AnnouncementBanners } from "@/components/announcement-banners";
+import { IdCollege } from "@/components/id-college";
+import { getIdCollegeSamples } from "@/lib/id-college";
+import { publicImageUrl } from "@/lib/storage";
 import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowRightIcon, BookOpenIcon } from "lucide-react";
@@ -11,7 +14,7 @@ import { SkeletonCard } from "@/components/skeletons";
 import { TopupShowcase } from "@/components/topup-showcase";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { WhatsAppButton } from "@/components/whatsapp-button";
+import { SellerWhatsAppPicker } from "@/components/seller-whatsapp-picker";
 import { getSellers } from "@/lib/sellers";
 import { getSettings } from "@/lib/settings";
 import { getLatestListingPerSeller, getPublishedTopups } from "@/lib/store";
@@ -99,6 +102,12 @@ export default function HomePage() {
         </Suspense>
       </section>
 
+      <div className="mx-auto w-full max-w-6xl px-4 pb-12">
+        <Suspense fallback={<Skeleton className="h-52 rounded-3xl" />}>
+          <IdCollegeSection />
+        </Suspense>
+      </div>
+
       <Suspense fallback={null}>
         <AnnouncementBanners />
       </Suspense>
@@ -143,20 +152,26 @@ function LatestSkeleton() {
   );
 }
 
-// Direct line to the store admin (Settings → admin WhatsApp number). Hidden
-// until a number is set, rather than showing a disabled button.
+// Show the full seller directory so customers choose who to contact.
 async function HeroWhatsApp() {
-  const settings = await getSettings();
-  if (!settings.admin_whatsapp) return null;
+  const sellers = await getSellers();
   return (
-    <WhatsAppButton
-      number={settings.admin_whatsapp}
-      message="Hi Banzzz•23 FF E Store! I have a question."
-      label="To sell accounts contact via whatsapp"
+    <SellerWhatsAppPicker
+      sellers={sellers}
+      message="Hi! I'd like to sell my Free Fire account. I found your shop on Banzzz•23 FF E-Store."
+      label="Want to Sell Account ?"
+      title="Choose a seller"
+      description="Select a seller to discuss selling your account on WhatsApp."
       variant="secondary"
-      className="px-5"
+      className="border-white/30 bg-[#007BFF]/70 px-5 text-white shadow-[0_8px_32px_rgba(0,123,255,0.3),inset_0_1px_0_rgba(255,255,255,0.35)] backdrop-blur-xl backdrop-saturate-150 hover:border-white/50 hover:bg-[#007BFF]/85 hover:text-white dark:border-white/30 dark:bg-[#007BFF]/70 dark:text-white dark:hover:border-white/50 dark:hover:bg-[#007BFF]/85 dark:hover:text-white"
     />
   );
+}
+
+async function IdCollegeSection() {
+  const [settings, samples] = await Promise.all([getSettings(), getIdCollegeSamples()]);
+  return <IdCollege whatsappNumber={settings.admin_whatsapp ?? ""} currency={settings.currency}
+    samples={samples.map((sample) => ({ slot: sample.slot, price: sample.price, imageUrl: publicImageUrl(sample.image_path) }))} />;
 }
 
 // Top-up banner with each category's live pack count and starting price

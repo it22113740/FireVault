@@ -25,6 +25,22 @@ export const settingsSchema = z.object({
         .min(1, "Add at least one region")
         .max(30, "Add 30 regions at most")
     ),
+  // Bank account top-up buyers pay into (shown in the Buy dialog). All four
+  // are optional together; leaving them empty turns top-up buying off.
+  bankAccountName: z.string().trim().max(100, "Keep it under 100 characters"),
+  bankAccountNumber: z
+    .string()
+    .trim()
+    .regex(/^[0-9 -]{0,30}$/, "Use digits only (spaces and dashes are fine)"),
+  bankName: z.string().trim().max(100, "Keep it under 100 characters"),
+  bankBranch: z.string().trim().max(100, "Keep it under 100 characters"),
+}).superRefine((value, ctx) => {
+  const fields = ["bankAccountName", "bankAccountNumber", "bankName", "bankBranch"] as const;
+  const filled = fields.filter((field) => value[field] !== "");
+  if (filled.length === 0 || filled.length === fields.length) return;
+  for (const field of fields) {
+    if (value[field] === "") ctx.addIssue({ code: "custom", path: [field], message: "Fill in all bank details, or leave them all empty" });
+  }
 });
 export type SettingsInput = z.input<typeof settingsSchema>;
 export type SettingsOutput = z.output<typeof settingsSchema>;

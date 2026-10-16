@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { GemIcon } from "lucide-react";
 import { TiltCard } from "@/components/interactive";
+import { TopupBuyDialog, type BankDetails } from "@/components/topup-buy-dialog";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { formatPrice } from "@/lib/format";
 import type { PublicTopup } from "@/lib/store";
@@ -10,10 +11,13 @@ export function TopupCard({
   topup,
   currency,
   whatsappNumber,
+  buy,
 }: {
   topup: PublicTopup;
   currency: string;
   whatsappNumber: string;
+  /** Customers get the Buy dialog; staff viewing the store only see WhatsApp */
+  buy?: { bank: BankDetails | null; defaultWhatsapp: string };
 }) {
   return (
     <TiltCard>
@@ -39,11 +43,15 @@ export function TopupCard({
           <p className="mt-auto pt-2 font-heading text-xl leading-7 font-bold text-primary tabular-nums">
             {formatPrice(topup.price, currency)}
           </p>
+          {buy && (
+            <TopupBuyDialog topup={topup} currency={currency} bank={buy.bank} defaultWhatsapp={buy.defaultWhatsapp} />
+          )}
           <WhatsAppButton
             number={whatsappNumber}
             message={topupMessage(topup, currency)}
+            label={buy ? "Ask on WhatsApp" : undefined}
             variant="secondary"
-            className="mt-2 w-full"
+            className={buy ? "w-full text-sm" : "mt-2 w-full"}
           />
         </div>
       </article>

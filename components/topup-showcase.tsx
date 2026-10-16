@@ -26,6 +26,7 @@ const DETAILS: Record<TopupCategory, { text: string; icon: LucideIcon }> = {
   membership: { text: "Weekly and monthly passes with daily rewards.", icon: CrownIcon },
   vip_bundle: { text: "Bundles packed with extra items and rewards.", icon: SparklesIcon },
   diamonds: { text: "Diamond packs in every size, from small to huge.", icon: GemIcon },
+  level_up_pass: { text: "Explore level up passes for your game ID.", icon: ZapIcon },
 };
 
 const STEPS = ["Pick a pack", "Send your UID on WhatsApp", "Get it delivered"];
@@ -53,7 +54,7 @@ export function TopupShowcase({
             Top up in <span className="bg-brand bg-clip-text text-transparent">minutes</span>
           </h2>
           <p className="max-w-xl text-lg text-muted-foreground sm:text-xl">
-            Memberships, VIP bundles and diamonds for your game ID. Choose a pack, send us your UID
+            Memberships, VIP bundles, diamonds and level up passes for your game ID. Choose a pack, send us your UID
             on WhatsApp and we&apos;ll deliver it once your payment is confirmed.
           </p>
 

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { parsePrice, priceInputSchema } from "@/lib/validations/common";
 
 export const LISTING_LIMITS = { title: 100, description: 2000, reason: 500 } as const;
+export const MAX_LISTING_SELLERS = 10;
 
 // Field formats, checked as you type and for every save (drafts included)
 export const listingFormSchema = z.object({
@@ -18,9 +19,10 @@ export const listingFormSchema = z.object({
   region: z.string().trim().max(20),
   // Seller is open to swapping for another account
   exchangeAvailable: z.boolean(),
-  // Super admin only: the seller shop the listing belongs to ("" = FireVault's
-  // own). Ignored for sales admins, whose listings are always their own.
-  sellerId: z.union([z.literal(""), z.uuid("Choose a seller from the list")]),
+  // Super admin only: the seller shops it's listed under. None = FireVault's
+  // own, one = that seller owns it, several = a shared listing the super
+  // admin manages. Ignored for sales admins, whose listings are their own.
+  sellerIds: z.array(z.uuid("Choose sellers from the list")).max(MAX_LISTING_SELLERS, `Choose up to ${MAX_LISTING_SELLERS} sellers`),
 });
 export type ListingFormValues = z.input<typeof listingFormSchema>;
 

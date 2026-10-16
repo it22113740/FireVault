@@ -20,6 +20,8 @@ export type SellerSummary = {
   whatsappGroupUrl: string | null;
   tiktokUrl: string | null;
   facebookUrl: string | null;
+  // The seller's own WhatsApp ("Contact via WhatsApp" on their shop page)
+  whatsappNumber: string | null;
   totalSold: number;
   likes: number;
   dislikes: number;
@@ -50,6 +52,7 @@ function toSeller(row: Views<"seller_directory">): SellerSummary {
     whatsappGroupUrl: row.whatsapp_group_url,
     tiktokUrl: row.tiktok_url,
     facebookUrl: row.facebook_url,
+    whatsappNumber: row.whatsapp_number,
     totalSold: row.total_sold ?? 0,
     likes: row.likes ?? 0,
     dislikes: row.dislikes ?? 0,

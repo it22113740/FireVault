@@ -3,6 +3,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { connection } from "next/server";
 import { z } from "zod";
 import { CACHE_TAGS } from "@/lib/cache-tags";
+import type { Json } from "@/lib/database.types";
 import type { Availability } from "@/lib/listings";
 import { publicImageUrl } from "@/lib/storage";
 import { createPublicClient } from "@/lib/supabase/public";
@@ -26,8 +27,18 @@ export type PublicListing = {
   exchangeAvailable: boolean;
   publishedAt: string | null;
   whatsappNumber: string | null;
-  // The seller's shop; null for the super admin's own listings
-  seller: { name: string; slug: string; logoUrl: string } | null;
+  // The first (or only) shop; null for the super admin's own listings
+  seller: ListingSeller | null;
+  // Every shop it's listed under: one usually, several for a shared listing
+  sellers: ListingSeller[];
+};
+
+export type ListingSeller = {
+  id: string;
+  name: string;
+  slug: string;
+  logoUrl: string;
+  whatsappNumber: string | null;
 };
 
 export type PublicTopup = {
@@ -85,12 +96,19 @@ type ViewRow = {
   exchange_available: boolean | null;
   published_at: string | null;
   whatsapp_number: string | null;
-  seller_name: string | null;
-  seller_slug: string | null;
-  seller_logo_path: string | null;
+  sellers: Json | null;
 };
 
+type SellerJson = { id: string; name: string; slug: string; logo_path: string | null; whatsapp_number: string | null };
+
 function toPublicListing(row: ViewRow): PublicListing {
+  const sellers = ((row.sellers ?? []) as SellerJson[]).map((seller) => ({
+    id: seller.id,
+    name: seller.name,
+    slug: seller.slug,
+    logoUrl: publicImageUrl(seller.logo_path),
+    whatsappNumber: seller.whatsapp_number || null,
+  }));
   return {
     id: row.id!,
     title: row.title!,
@@ -102,10 +120,8 @@ function toPublicListing(row: ViewRow): PublicListing {
     exchangeAvailable: row.exchange_available ?? false,
     publishedAt: row.published_at,
     whatsappNumber: row.whatsapp_number || null,
-    seller:
-      row.seller_slug && row.seller_name
-        ? { name: row.seller_name, slug: row.seller_slug, logoUrl: publicImageUrl(row.seller_logo_path) }
-        : null,
+    seller: sellers[0] ?? null,
+    sellers,
   };
 }
 
@@ -121,7 +137,7 @@ async function getPublishedListingsCached(filters: ListingFilters) {
 
   let query = createPublicClient().from("published_listings").select("*", { count: "exact" });
   if (filters.region) query = query.eq("region", filters.region);
-  if (filters.seller) query = query.eq("seller_id", filters.seller);
+  if (filters.seller) query = query.contains("seller_ids", [filters.seller]);
   if (filters.availability) query = query.eq("availability", filters.availability);
   if (filters.exchange) query = query.eq("exchange_available", true);
   if (filters.min !== undefined) query = query.gte("price", filters.min);
@@ -174,10 +190,31 @@ async function getSellerListingsCached(sellerId: string) {
   const { data, error } = await createPublicClient()
     .from("published_listings")
     .select("*")
-    .eq("seller_id", sellerId)
+    // Includes shared listings shown under this shop
+    .contains("seller_ids", [sellerId])
     .order("availability")
     .order("published_at", { ascending: false })
     .limit(48);
+  if (error) throw new Error(`Failed to load listings: ${error.message}`);
+  return (data ?? []).map(toPublicListing);
+}
+
+// Staff "All live listings" view: every shop's live accounts, newest first
+export async function getAllLiveListings() {
+  await connection();
+  return getAllLiveListingsCached();
+}
+
+async function getAllLiveListingsCached() {
+  "use cache";
+  cacheTag(CACHE_TAGS.listings);
+  cacheLife("hours");
+
+  const { data, error } = await createPublicClient()
+    .from("published_listings")
+    .select("*")
+    .order("published_at", { ascending: false })
+    .limit(200);
   if (error) throw new Error(`Failed to load listings: ${error.message}`);
   return (data ?? []).map(toPublicListing);
 }

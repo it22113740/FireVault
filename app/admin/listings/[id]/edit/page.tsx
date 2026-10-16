@@ -65,7 +65,12 @@ async function EditListing({ params }: { params: Props["params"] }) {
     );
   }
 
-  const sellers = profile.role === "super_admin" ? await getSellerOptions() : undefined;
+  const [sellers, { data: shared }] = profile.role === "super_admin"
+    ? await Promise.all([
+        getSellerOptions(),
+        supabase.from("listing_sellers").select("seller_id").eq("listing_id", listing.id).order("position"),
+      ])
+    : [undefined, { data: null }];
   const { created_by: ownerId, ...fields } = listing;
 
   return (
@@ -76,8 +81,12 @@ async function EditListing({ params }: { params: Props["params"] }) {
       sellers={sellers}
       listing={{
         ...fields,
-        // Anything not owned by a seller shop shows as FireVault's own
-        sellerId: sellers?.some((seller) => seller.id === ownerId) ? ownerId : "",
+        // Shared shops if any, else the owning shop, else FireVault's own
+        sellerIds: shared?.length
+          ? shared.map((row) => row.seller_id)
+          : sellers?.some((seller) => seller.id === ownerId)
+            ? [ownerId]
+            : [],
         imageUrl: publicImageUrl(listing.image_path),
       }}
     />

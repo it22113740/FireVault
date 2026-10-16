@@ -16,10 +16,12 @@ import { RatingSummary, SellerLogo } from "@/components/seller-card";
 import { ShareButton } from "@/components/share-button";
 import { StarRating } from "@/components/star-rating";
 import { Button } from "@/components/ui/button";
+import { WhatsAppButton } from "@/components/whatsapp-button";
 import { formatDate } from "@/lib/format";
 import type { SellerReview, SellerSummary } from "@/lib/sellers";
 import type { PublicListing } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import { sellerMessage } from "@/lib/whatsapp-messages";
 
 // The seller shop page pieces, shared by the public /sellers/[slug] page, the
 // seller's own shop preview and the read-only seller directory in /admin.
@@ -71,7 +73,17 @@ export function SellerHeader({
               <RatingSummary seller={seller} />
             </a>
           </div>
-          <ShareButton title={seller.name} text={`${seller.name} on FireVault`} />
+          <div className="flex flex-wrap items-center gap-2">
+            {seller.whatsappNumber && (
+              <WhatsAppButton
+                number={seller.whatsappNumber}
+                message={sellerMessage(seller.name)}
+                label="Contact via WhatsApp"
+                className="flex-1 sm:flex-none"
+              />
+            )}
+            <ShareButton title={seller.name} text={`${seller.name} on FireVault`} />
+          </div>
         </div>
 
         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">

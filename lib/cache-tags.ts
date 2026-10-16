@@ -2,6 +2,8 @@
 // must call updateTag() with the matching tag so the store updates at once.
 export const CACHE_TAGS = {
   announcements: "announcements",
+  // Game update posters on /updates
+  updates: "updates",
   listings: "listings",
   topups: "topups",
   settings: "settings",

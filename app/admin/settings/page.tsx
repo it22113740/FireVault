@@ -5,13 +5,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { requireSuperAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { SettingsForm } from "./settings-form";
+import { IdCollegeManager } from "./id-college-manager";
 
 export const metadata: Metadata = { title: "Settings" };
 
 export default function SettingsPage() {
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Settings" description="Store-wide contact details, currency and regions." />
+      <PageHeader title="Settings" description="Store-wide contact details, currency, regions and the bank account for top-up payments." />
       <Suspense fallback={<Skeleton className="h-96 max-w-xl" />}>
         <Settings />
       </Suspense>
@@ -25,15 +26,24 @@ async function Settings() {
   const supabase = await createClient();
   const { data: settings } = await supabase.from("app_settings").select("*").eq("id", 1).single();
   if (!settings) throw new Error("Settings row is missing");
+  const { data: samples, error } = await supabase.from("id_college_samples").select("*").order("slot");
+  if (error) throw new Error("Couldn't load ID College samples");
 
   return (
+    <>
     <SettingsForm
       defaults={{
         adminWhatsapp: settings.admin_whatsapp,
         currency: settings.currency,
         inactiveMessage: settings.inactive_message,
         regions: settings.regions.join(", "),
+        bankAccountName: settings.bank_account_name,
+        bankAccountNumber: settings.bank_account_number,
+        bankName: settings.bank_name,
+        bankBranch: settings.bank_branch,
       }}
     />
+    <IdCollegeManager samples={samples ?? []} currency={settings.currency} />
+    </>
   );
 }

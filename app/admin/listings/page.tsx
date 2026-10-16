@@ -18,6 +18,7 @@ import {
   type PublishStatus,
 } from "@/lib/listings";
 import { getSettings } from "@/lib/settings";
+import { getSellerListings } from "@/lib/store";
 import { publicImageUrl } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import { AvailabilityToggle } from "./availability-toggle";
@@ -68,7 +69,7 @@ async function Listings({ searchParams }: { searchParams: Props["searchParams"] 
   let query = supabase
     .from("listings")
     .select(
-      "id, title, price, region, exchange_available, image_path, availability, publish_status, updated_at, owner:profiles!listings_created_by_fkey(full_name)"
+      "id, title, price, region, exchange_available, image_path, availability, publish_status, updated_at, owner:profiles!listings_created_by_fkey(full_name), shared:listing_sellers(position, shop:seller_profiles(display_name))"
     );
   // Sales admins: RLS already limits rows to their own; filter explicitly too
   if (!isSuperAdmin) query = query.eq("created_by", profile.id);
@@ -84,8 +85,12 @@ async function Listings({ searchParams }: { searchParams: Props["searchParams"] 
     return isSuperAdmin ? count : count.eq("created_by", profile.id);
   };
 
-  const [{ data }, ...counts] = await Promise.all([
+  const [{ data }, sharedWithMe, ...counts] = await Promise.all([
     query.order("updated_at", { ascending: false }).limit(200),
+    // Sales admins: live listings the super admin shares with their shop
+    isSuperAdmin
+      ? Promise.resolve([])
+      : getSellerListings(profile.id).then((rows) => rows.filter((row) => row.sellers.length > 1)),
     ...STATUS_TABS.map(countFor),
   ]);
   const listings = data ?? [];
@@ -168,7 +173,7 @@ async function Listings({ searchParams }: { searchParams: Props["searchParams"] 
                       listing.price > 0 ? formatPrice(listing.price, settings.currency) : "No price",
                       listing.region || "No region",
                       listing.exchange_available ? "Exchange possible" : null,
-                      isSuperAdmin ? listing.owner?.full_name : null,
+                      isSuperAdmin ? ownerLabel(listing) : null,
                       `Updated ${formatDate(listing.updated_at)}`,
                     ]
                       .filter(Boolean)
@@ -197,6 +202,63 @@ async function Listings({ searchParams }: { searchParams: Props["searchParams"] 
           })}
         </ul>
       )}
+
+      {sharedWithMe.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <div>
+            <h2 className="text-lg font-semibold">Shared with your shop</h2>
+            <p className="text-sm text-muted-foreground">
+              Live listings the admin also lists under your shop. Only the admin edits them; mark one
+              Reserved when you&apos;re selling it and it&apos;s reserved for every seller.
+            </p>
+          </div>
+          <ul className="flex flex-col divide-y rounded-xl border bg-card">
+            {sharedWithMe.map((listing) => (
+              <li
+                key={listing.id}
+                className="grid grid-cols-[3.5rem_minmax(0,1fr)] gap-x-4 gap-y-3 p-4 md:grid-cols-[3.5rem_minmax(0,1fr)_9rem] md:items-center"
+              >
+                <div className="relative size-14 overflow-hidden rounded-lg bg-muted">
+                  {listing.imageUrl ? (
+                    <Image src={listing.imageUrl} alt="" fill sizes="56px" className="object-cover" />
+                  ) : (
+                    <ImageIcon className="absolute inset-0 m-auto size-5 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate font-medium">
+                    <Link href={`/accounts/${listing.id}`} target="_blank" className="hover:text-primary">
+                      {listing.title}
+                    </Link>
+                  </p>
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                    {[
+                      formatPrice(listing.price, settings.currency),
+                      listing.region,
+                      `With ${listing.sellers.map((seller) => seller.name).join(", ")}`,
+                    ].join(" · ")}
+                  </p>
+                </div>
+                <div className="col-start-2 md:col-start-auto">
+                  <AvailabilityToggle id={listing.id} availability={listing.availability} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </>
   );
+}
+
+// Super admin list: who a listing is filed under
+function ownerLabel(listing: {
+  owner: { full_name: string } | null;
+  shared: { position: number; shop: { display_name: string } | null }[];
+}) {
+  if (listing.shared.length > 1) {
+    const shops = [...listing.shared].sort((a, b) => a.position - b.position).map((row) => row.shop?.display_name);
+    return `Shared: ${shops.filter(Boolean).join(", ")}`;
+  }
+  return listing.owner?.full_name;
 }

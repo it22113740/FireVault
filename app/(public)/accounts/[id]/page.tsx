@@ -8,6 +8,7 @@ import { ExchangeBadge } from "@/components/exchange-badge";
 import { SellerLogo } from "@/components/seller-card";
 import { FadeIn } from "@/components/motion";
 import { AvailabilityBadge } from "@/components/status-badge";
+import { SellerWhatsAppPicker } from "@/components/seller-whatsapp-picker";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { formatPrice, shortId } from "@/lib/format";
 import { getSettings } from "@/lib/settings";
@@ -55,13 +56,13 @@ async function AccountDetail({ params }: { params: Props["params"] }) {
 
   const reserved = listing.availability === "reserved";
   const price = formatPrice(listing.price, settings.currency);
-  const whatsapp = (
-    <WhatsAppButton
-      number={listing.whatsappNumber}
-      message={listingMessage(listing, settings.currency)}
-      disabled={reserved}
-      className="w-full"
-    />
+  const message = listingMessage(listing, settings.currency);
+  // A shared listing is sold by several shops: the buyer picks one below
+  const shared = listing.sellers.length > 1;
+  const whatsapp = shared ? (
+    <SellerWhatsAppPicker sellers={listing.sellers} message={message} disabled={reserved} className="w-full" />
+  ) : (
+    <WhatsAppButton number={listing.whatsappNumber} message={message} disabled={reserved} className="w-full" />
   );
 
   return (
@@ -105,7 +106,28 @@ async function AccountDetail({ params }: { params: Props["params"] }) {
           )}
         </div>
 
-        {listing.seller && (
+        {shared ? (
+          <section id="sellers" className="flex scroll-mt-24 flex-col gap-2">
+            <h2 className="font-semibold">Sold by {listing.sellers.length} sellers</h2>
+            <p className="text-sm text-muted-foreground">
+              It&apos;s the same account. Tap Contact via WhatsApp and choose who to buy from.
+            </p>
+            <ul className="flex flex-col gap-2">
+              {listing.sellers.map((seller) => (
+                <li key={seller.id}>
+                  <Link
+                    href={`/sellers/${seller.slug}`}
+                    className="flex items-center gap-3 rounded-xl border bg-card p-3 transition-colors hover:border-primary/50"
+                  >
+                    <SellerLogo url={seller.logoUrl} name={seller.name} className="size-11" />
+                    <span className="min-w-0 flex-1 truncate font-medium">{seller.name}</span>
+                    <span className="text-sm text-primary">Ratings &amp; reviews</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : listing.seller && (
           <Link
             href={`/sellers/${listing.seller.slug}`}
             className="flex items-center gap-3 rounded-xl border bg-card p-3 transition-colors hover:border-primary/50"
