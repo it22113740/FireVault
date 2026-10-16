@@ -38,9 +38,13 @@ export function isSuperAdminOnlyPath(pathname: string) {
   );
 }
 
-// Pages anyone can open without logging in. Everything else, including the
-// store itself, requires an account (customers sign up at /signup).
+// Storefront browsing is public; account and staff pages remain protected.
 const PUBLIC_PATHS = [
+  "/accounts",
+  "/sellers",
+  "/top-ups",
+  "/updates",
+  "/how-to-buy",
   "/login",
   "/signup",
   "/forgot-password",
@@ -51,5 +55,5 @@ const PUBLIC_PATHS = [
 ];
 
 export function isPublicPath(pathname: string) {
-  return PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+  return pathname === "/" || PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }

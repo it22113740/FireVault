@@ -7,7 +7,7 @@ import { hasActiveAccess } from "@/lib/sales-admin-access";
 const ONBOARDING_PATH = "/admin/onboarding";
 
 // Runs on every page request:
-//  * the whole site needs an account, except the pages in isPublicPath()
+//  * storefront pages are public; account and dashboard pages need login
 //  * blocked customers and inactive/expired sales admins are signed out
 //  * customers can't open /admin; sales admins can't open super-admin pages
 //  * sales admins must create their shop profile before using /admin
@@ -53,6 +53,7 @@ export async function proxy(request: NextRequest) {
 
   if (!hasActiveAccess(profile)) {
     await supabase.auth.signOut();
+    if (isPublicPath(pathname)) return response;
     if (profile.role === "customer") {
       return pathname === "/login" ? response : redirectTo("/login?blocked=1", request, response);
     }

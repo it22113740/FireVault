@@ -4,7 +4,7 @@ import { getIdCollegeSamples } from "@/lib/id-college";
 import { publicImageUrl } from "@/lib/storage";
 import { Suspense } from "react";
 import Link from "next/link";
-import { ArrowRightIcon, BookOpenIcon } from "lucide-react";
+import { ArrowRightIcon, BookOpenIcon, NewspaperIcon } from "lucide-react";
 import { Magnetic, Reveal } from "@/components/interactive";
 import { ListingCard } from "@/components/listing-card";
 import { ListingCarousel } from "@/components/listing-carousel";
@@ -42,7 +42,13 @@ export default function HomePage() {
               </span>
             </h1>
             <p className="font-heading text-2xl font-semibold sm:text-4xl">Free Fire Accounts Buy &amp; Sale</p>
-            <p className="font-heading text-xl font-semibold text-muted-foreground sm:text-2xl">UID Top Up</p>
+            <p className="flex flex-wrap items-center gap-x-3 gap-y-1 font-heading text-xl font-semibold text-muted-foreground sm:text-2xl">
+              <span>UID Top Up</span>
+              <span aria-hidden="true">·</span>
+              <span>ID College making</span>
+              <span aria-hidden="true">·</span>
+              <span>Free Fire Updates</span>
+            </p>
           </Reveal>
           <Reveal delay={0.12}>
             <p className="max-w-xl text-lg font-medium text-muted-foreground sm:text-xl">
@@ -64,7 +70,10 @@ export default function HomePage() {
             <Suspense fallback={<Skeleton className="h-11 w-52" />}>
               <HeroWhatsApp />
             </Suspense>
-            <div className="w-full">
+            <div className="flex w-full flex-wrap gap-3">
+              <Button size="lg" className="h-11 bg-brand px-5 font-semibold text-primary-foreground shadow-lg shadow-primary/25" render={<Link href="/updates" />} nativeButton={false}>
+                <NewspaperIcon /> FF-Updates
+              </Button>
               <Button size="lg" variant="outline" className="h-11 px-5" render={<Link href="/how-to-buy" />} nativeButton={false}>
                 <BookOpenIcon /> How buying works
               </Button>

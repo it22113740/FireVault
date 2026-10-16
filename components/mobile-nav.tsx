@@ -16,7 +16,7 @@ export function MobileNav({ account }: { account?: React.ReactNode }) {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
-        render={<Button variant="ghost" size="icon-lg" className="md:hidden" />}
+        render={<Button variant="ghost" size="icon-lg" className="xl:hidden" />}
         aria-label="Open menu"
       >
         <MenuIcon />

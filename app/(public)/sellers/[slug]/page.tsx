@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { StarIcon } from "lucide-react";
 import { Reveal } from "@/components/interactive";
 import { ReviewList, SellerAbout, SellerHeader, SellerListingGrid } from "@/components/seller-profile";
@@ -104,6 +105,16 @@ async function Reviews({ seller }: { seller: SellerSummary }) {
             sellerName={seller.name}
             existing={mine ? { reaction: mine.reaction, rating: mine.rating, comment: mine.comment } : null}
           />
+        ) : !viewer ? (
+          <div className="flex flex-col gap-3 rounded-xl border bg-card p-4 text-sm">
+            <p className="text-muted-foreground">Log in to leave a review, rate this seller, or give a like or dislike.</p>
+            <Link
+              href={`/login?next=${encodeURIComponent(`/sellers/${seller.slug}`)}`}
+              className="flex min-h-11 items-center justify-center rounded-lg bg-primary px-4 font-semibold text-primary-foreground"
+            >
+              Log in to leave feedback
+            </Link>
+          </div>
         ) : (
           <p className="flex items-start gap-2 rounded-xl border bg-card p-4 text-sm text-muted-foreground">
             <StarIcon className="mt-0.5 size-4 shrink-0 text-warning" />
