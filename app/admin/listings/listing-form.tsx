@@ -19,7 +19,6 @@ import { saveListing } from "@/lib/actions/listings";
 import { showActionError } from "@/lib/forms";
 import { stageImage } from "@/lib/stage-image";
 import { LISTING_IMAGE_SIZE, type PublishStatus } from "@/lib/listings";
-import type { Role } from "@/lib/roles";
 import { formatPriceInput } from "@/lib/validations/common";
 import {
   LISTING_LIMITS,
@@ -44,7 +43,8 @@ export type EditableListing = {
 };
 
 type ListingFormProps = {
-  role: Role;
+  /** Super admin, or a seller whose listings skip review */
+  canPublish: boolean;
   regions: string[];
   currency: string;
   listing?: EditableListing;
@@ -67,9 +67,8 @@ export function ListingForm(props: ListingFormProps) {
   return <ListingFormFields key={bfcacheId} {...props} />;
 }
 
-function ListingFormFields({ role, regions, currency, listing }: ListingFormProps) {
+function ListingFormFields({ canPublish, regions, currency, listing }: ListingFormProps) {
   const router = useRouter();
-  const isSuperAdmin = role === "super_admin";
   const [id, setId] = useState(listing?.id ?? null);
   const [status, setStatus] = useState<PublishStatus | null>(listing?.publish_status ?? null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -201,7 +200,7 @@ function ListingFormFields({ role, regions, currency, listing }: ListingFormProp
   }
 
   const buttons: { intent: ListingIntent; label: string; pendingLabel: string; primary?: boolean }[] =
-    isSuperAdmin
+    canPublish
       ? status === "published"
         ? [{ intent: "publish", label: "Save changes", pendingLabel: "Saving…", primary: true }]
         : [
@@ -232,7 +231,7 @@ function ListingFormFields({ role, regions, currency, listing }: ListingFormProp
           <AlertDescription>{listing.rejection_reason}</AlertDescription>
         </Alert>
       )}
-      {!isSuperAdmin && status === "published" && (
+      {!canPublish && status === "published" && (
         <Alert>
           <CircleAlertIcon />
           <AlertTitle>This listing is live</AlertTitle>

@@ -161,9 +161,14 @@ export async function submitApplication(formData: FormData): Promise<ActionResul
 // ahead and the super admin gets a one-time setup link to send the seller.
 export type ApprovalResult = { emailed: true } | { emailed: false; setupLink: string; reason: string };
 
-export async function approveApplication(id: string): Promise<ActionResult<ApprovalResult>> {
+// listingsNeedReview: false lets the new seller's listings go live without review
+export async function approveApplication(
+  id: string,
+  listingsNeedReview: boolean
+): Promise<ActionResult<ApprovalResult>> {
   const reviewer = await requireSuperAdmin();
   if (!uuidSchema.safeParse(id).success) return fail("Application not found.");
+  if (typeof listingsNeedReview !== "boolean") return fail("Choose whether their listings need review.");
 
   const supabase = await createClient();
   const { data: application } = await supabase
@@ -210,6 +215,7 @@ export async function approveApplication(id: string): Promise<ActionResult<Appro
       contact_number: application.contact_number,
       is_active: true,
       active_until: accessExpiryFromNow(),
+      listings_need_review: listingsNeedReview,
     });
     if (profileError) throw new Error(profileError.message);
 
@@ -265,6 +271,7 @@ export async function approveApplication(id: string): Promise<ActionResult<Appro
   await logAudit(reviewer.id, "application.approve", id, {
     user_id: userId,
     emailed: delivery.emailed,
+    listings_need_review: listingsNeedReview,
   });
   refresh();
   return ok(delivery);

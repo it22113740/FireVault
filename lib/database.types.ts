@@ -160,6 +160,7 @@ export type Database = {
           full_name: string;
           id: string;
           is_active: boolean;
+          listings_need_review: boolean;
           role: Database["public"]["Enums"]["user_role"];
           whatsapp_number: string | null;
         };
@@ -171,6 +172,7 @@ export type Database = {
           full_name: string;
           id: string;
           is_active?: boolean;
+          listings_need_review?: boolean;
           role: Database["public"]["Enums"]["user_role"];
           whatsapp_number?: string | null;
         };
@@ -182,6 +184,7 @@ export type Database = {
           full_name?: string;
           id?: string;
           is_active?: boolean;
+          listings_need_review?: boolean;
           role?: Database["public"]["Enums"]["user_role"];
           whatsapp_number?: string | null;
         };
@@ -461,6 +464,7 @@ export type Database = {
     };
     Functions: {
       is_active_customer: { Args: never; Returns: boolean };
+      can_self_publish: { Args: never; Returns: boolean };
       is_active_sales_admin: { Args: never; Returns: boolean };
       is_super_admin: { Args: never; Returns: boolean };
     };

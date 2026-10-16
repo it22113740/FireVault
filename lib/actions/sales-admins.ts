@@ -30,3 +30,25 @@ export async function setSalesAdminActive(id: string, active: boolean): Promise<
   refresh();
   return ok();
 }
+
+// Whether this seller's listings go through /admin/review. Applies to their
+// next save; listings already waiting for review stay in the queue.
+export async function setSalesAdminReview(id: string, needsReview: boolean): Promise<ActionResult> {
+  const actor = await requireSuperAdmin();
+  if (!uuidSchema.safeParse(id).success || typeof needsReview !== "boolean") {
+    return fail("Sales admin not found.");
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({ listings_need_review: needsReview })
+    .eq("id", id)
+    .eq("role", "sales_admin")
+    .select("id");
+  if (error || data.length === 0) return fail("Couldn't update this sales admin.");
+
+  await logAudit(actor.id, needsReview ? "salesadmin.review_on" : "salesadmin.review_off", id);
+  refresh();
+  return ok();
+}

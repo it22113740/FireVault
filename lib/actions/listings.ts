@@ -9,6 +9,7 @@ import { CACHE_TAGS } from "@/lib/cache-tags";
 import { stagedToWebp } from "@/lib/images";
 import {
   LISTING_IMAGE_SIZE,
+  publishesDirectly,
   salesAdminCanEdit,
   type Availability,
   type PublishStatus,
@@ -38,11 +39,12 @@ const AUDIT_BY_INTENT: Record<Exclude<ListingIntent, "autosave">, AuditAction> =
 export async function saveListing(formData: FormData): Promise<ActionResult<SavedListing>> {
   const profile = await requireStaff();
   const isSuperAdmin = profile.role === "super_admin";
+  const canPublish = publishesDirectly(profile);
 
   const intentResult = z.enum(LISTING_INTENTS).safeParse(formData.get("intent"));
   if (!intentResult.success) return fail("Unknown action.");
   const intent = intentResult.data;
-  if (intent === "publish" && !isSuperAdmin) {
+  if (intent === "publish" && !canPublish) {
     return fail("Only a super admin can publish. Submit it for review instead.");
   }
   if (intent === "submit" && isSuperAdmin) return fail("Publish the listing directly.");
@@ -143,7 +145,7 @@ export async function saveListing(formData: FormData): Promise<ActionResult<Save
     exchange_available: values.exchangeAvailable,
     image_path: imagePath,
     publish_status: nextStatus,
-    ...(intent === "publish" ? { reviewed_by: profile.id, rejection_reason: null } : {}),
+    ...(intent === "publish" && isSuperAdmin ? { reviewed_by: profile.id, rejection_reason: null } : {}),
   };
 
   // The listings trigger has the final say on status (e.g. a sales admin

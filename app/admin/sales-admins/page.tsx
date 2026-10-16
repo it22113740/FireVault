@@ -12,6 +12,7 @@ import { hasActiveAccess } from "@/lib/sales-admin-access";
 import { createClient } from "@/lib/supabase/server";
 import { whatsappUrl } from "@/lib/whatsapp";
 import { ActiveSwitch } from "./active-switch";
+import { ReviewSwitch } from "./review-switch";
 
 export const metadata: Metadata = { title: "Sales admins" };
 
@@ -35,7 +36,7 @@ async function SalesAdmins() {
   const { data } = await supabase
     .from("profiles")
     .select(
-      "id, role, full_name, email, whatsapp_number, contact_number, is_active, active_until, created_at, listings!listings_created_by_fkey(count)"
+      "id, role, full_name, email, whatsapp_number, contact_number, is_active, active_until, listings_need_review, created_at, listings!listings_created_by_fkey(count)"
     )
     .eq("role", "sales_admin")
     .order("created_at", { ascending: false });
@@ -60,7 +61,7 @@ async function SalesAdmins() {
       {sellers.map((seller) => (
         <li
           key={seller.id}
-          className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto_auto] sm:items-center sm:gap-6"
+          className="grid gap-3 p-4 sm:grid-cols-2 sm:items-center sm:gap-x-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto_auto_auto]"
         >
           <div className="min-w-0">
             <p className="truncate font-medium">{seller.full_name}</p>
@@ -83,12 +84,13 @@ async function SalesAdmins() {
               </a>
             )}
           </div>
-          <div className="text-sm text-muted-foreground sm:text-right">
+          <div className="text-sm text-muted-foreground lg:text-right">
             <span className="font-medium tabular-nums text-foreground">
               {seller.listings[0]?.count ?? 0}
             </span>{" "}
             listings · since {formatDate(seller.created_at)}
           </div>
+          <ReviewSwitch id={seller.id} name={seller.full_name} needsReview={seller.listings_need_review} />
           <ActiveSwitch
             id={seller.id}
             name={seller.full_name}

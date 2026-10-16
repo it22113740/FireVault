@@ -16,6 +16,7 @@ import { EmptyState } from "@/components/empty-state";
 import { FormField } from "@/components/form-field";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { approveApplication, denyApplication } from "@/lib/actions/applications";
 import type { Enums } from "@/lib/database.types";
@@ -242,12 +243,13 @@ function ReviewActions({
   onSetupLink: (setupLink: SetupLink) => void;
 }) {
   const [approving, startApprove] = useTransition();
+  const [needsReview, setNeedsReview] = useState(true);
   const [denyOpen, setDenyOpen] = useState(false);
   const [reason, setReason] = useState("");
 
   function approve() {
     startApprove(async () => {
-      const result = await approveApplication(application.id);
+      const result = await approveApplication(application.id, needsReview);
       if (!result.ok) {
         toast.error(result.error);
       } else if (result.data.emailed) {
@@ -279,43 +281,61 @@ function ReviewActions({
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
-      <Button size="lg" onClick={approve} disabled={approving} className="h-11">
-        {approving ? <Loader2Icon className="animate-spin" /> : <CheckIcon />}
-        {approving ? "Approving…" : "Approve"}
-      </Button>
-      <Button
-        size="lg"
-        variant="outline"
-        onClick={() => setDenyOpen(true)}
-        disabled={approving}
-        className="h-11"
-      >
-        <XIcon /> Deny
-      </Button>
-      <ConfirmDialog
-        open={denyOpen}
-        onOpenChange={setDenyOpen}
-        title={`Deny ${application.full_name}?`}
-        description="They won't get a login. If email is set up, they'll receive the reason below."
-        confirmLabel="Deny application"
-        pendingLabel="Denying…"
-        onConfirm={deny}
-      >
-        <FormField
-          label="Reason (optional)"
-          htmlFor={`reason-${application.id}`}
-          counter={{ value: reason.length, max: 500 }}
+    <div className="flex flex-col gap-3">
+      <label className="flex min-h-11 cursor-pointer items-center justify-between gap-4 rounded-xl border bg-background px-4 py-3">
+        <span>
+          <span className="block text-sm font-medium">Listings need review</span>
+          <span className="block text-xs text-muted-foreground">
+            {needsReview
+              ? "You approve each listing before it goes live."
+              : "Their listings go live as soon as they publish. You can change this later on Sales admins."}
+          </span>
+        </span>
+        <Switch
+          checked={needsReview}
+          onCheckedChange={setNeedsReview}
+          disabled={approving}
+          aria-label="Listings need review"
+        />
+      </label>
+      <div className="flex flex-wrap gap-2">
+        <Button size="lg" onClick={approve} disabled={approving} className="h-11">
+          {approving ? <Loader2Icon className="animate-spin" /> : <CheckIcon />}
+          {approving ? "Approving…" : "Approve"}
+        </Button>
+        <Button
+          size="lg"
+          variant="outline"
+          onClick={() => setDenyOpen(true)}
+          disabled={approving}
+          className="h-11"
         >
-          <Textarea
-            id={`reason-${application.id}`}
-            value={reason}
-            onChange={(event) => setReason(event.target.value)}
-            maxLength={500}
-            rows={3}
-          />
-        </FormField>
-      </ConfirmDialog>
+          <XIcon /> Deny
+        </Button>
+        <ConfirmDialog
+          open={denyOpen}
+          onOpenChange={setDenyOpen}
+          title={`Deny ${application.full_name}?`}
+          description="They won't get a login. If email is set up, they'll receive the reason below."
+          confirmLabel="Deny application"
+          pendingLabel="Denying…"
+          onConfirm={deny}
+        >
+          <FormField
+            label="Reason (optional)"
+            htmlFor={`reason-${application.id}`}
+            counter={{ value: reason.length, max: 500 }}
+          >
+            <Textarea
+              id={`reason-${application.id}`}
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              maxLength={500}
+              rows={3}
+            />
+          </FormField>
+        </ConfirmDialog>
+      </div>
     </div>
   );
 }

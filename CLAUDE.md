@@ -26,6 +26,10 @@ UI/UX rules. Read the relevant section before changing anything.
     sign up at `/signup`; `/admin/customers` lists them and can block them
     (`is_active`).
   - Sales admins get one month of access per activation (`profiles.active_until`).
+  - Per-seller review (`profiles.listings_need_review`, chosen on approval,
+    editable on `/admin/sales-admins`). Sellers without review publish
+    directly like a super admin (`publishesDirectly()` in `lib/listings.ts`,
+    `can_self_publish()` in the listings trigger) and their live edits stay live.
   - Sellers must create a shop (`seller_profiles`) before using `/admin`
     (`/admin/onboarding`, then `/admin/shop`). Public pages: `/sellers` and
     `/sellers/[slug]`.

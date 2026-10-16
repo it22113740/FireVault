@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/page-header";
 import { SkeletonForm } from "@/components/skeletons";
 import { requireStaff } from "@/lib/auth";
+import { publishesDirectly } from "@/lib/listings";
 import { getSettings } from "@/lib/settings";
 import { ListingForm } from "../listing-form";
 
@@ -21,5 +22,5 @@ export default function NewListingPage() {
 
 async function NewListing() {
   const [profile, settings] = await Promise.all([requireStaff(), getSettings()]);
-  return <ListingForm role={profile.role} regions={settings.regions} currency={settings.currency} />;
+  return <ListingForm canPublish={publishesDirectly(profile)} regions={settings.regions} currency={settings.currency} />;
 }

@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/page-header";
 import { SkeletonForm } from "@/components/skeletons";
 import { PublishStatusBadge } from "@/components/status-badge";
 import { requireStaff } from "@/lib/auth";
-import { salesAdminCanEdit } from "@/lib/listings";
+import { publishesDirectly, salesAdminCanEdit } from "@/lib/listings";
 import { getSettings } from "@/lib/settings";
 import { publicImageUrl } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
@@ -66,7 +66,7 @@ async function EditListing({ params }: { params: Props["params"] }) {
 
   return (
     <ListingForm
-      role={profile.role}
+      canPublish={publishesDirectly(profile)}
       regions={settings.regions}
       currency={settings.currency}
       listing={{ ...listing, imageUrl: publicImageUrl(listing.image_path) }}

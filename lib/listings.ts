@@ -21,6 +21,12 @@ export function salesAdminCanEdit(status: PublishStatus) {
   return status === "draft" || status === "rejected" || status === "published";
 }
 
+// Super admins, and sellers the super admin exempted from review, publish
+// listings directly (mirrors public.can_self_publish() in the listings trigger)
+export function publishesDirectly(profile: { role: string; listings_need_review: boolean }) {
+  return profile.role === "super_admin" || (profile.role === "sales_admin" && !profile.listings_need_review);
+}
+
 export function canToggleAvailability(status: PublishStatus, isSuperAdmin: boolean) {
   return isSuperAdmin || salesAdminCanEdit(status);
 }

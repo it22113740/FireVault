@@ -11,6 +11,8 @@ export type AuditAction =
   | "application.deny"
   | "salesadmin.activate"
   | "salesadmin.deactivate"
+  | "salesadmin.review_on"
+  | "salesadmin.review_off"
   | "listing.create"
   | "listing.update"
   | "listing.submit"
