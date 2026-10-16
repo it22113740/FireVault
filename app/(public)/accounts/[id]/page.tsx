@@ -14,7 +14,7 @@ import { getSettings } from "@/lib/settings";
 import { getPublishedListing } from "@/lib/store";
 import { listingMessage } from "@/lib/whatsapp-messages";
 import { AccountDetailSkeleton } from "./account-detail-skeleton";
-import { ZoomableImage } from "./zoomable-image";
+import { ZoomableImage } from "@/components/zoomable-image";
 
 type Props = PageProps<"/accounts/[id]">;
 

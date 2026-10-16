@@ -14,17 +14,20 @@ export function ListingCard({
   listing,
   currency,
   priority,
+  href = `/accounts/${listing.id}`,
 }: {
   listing: PublicListing;
   currency: string;
   priority?: boolean;
+  /** Defaults to the store page; the admin seller directory links elsewhere */
+  href?: string;
 }) {
   const reserved = listing.availability === "reserved";
 
   return (
     <TiltCard>
       <Link
-        href={`/accounts/${listing.id}`}
+        href={href}
         className={cn(
           "group flex h-full flex-col overflow-hidden rounded-xl border bg-card transition duration-200",
           "hover:border-primary/50 hover:shadow-[0_12px_32px_-16px_var(--brand-from)] md:hover:-translate-y-1",

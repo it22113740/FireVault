@@ -1,18 +1,22 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
+import { EyeIcon, PencilIcon } from "lucide-react";
 import { toast } from "sonner";
 import { FormField } from "@/components/form-field";
 import { ImagePicker } from "@/components/image-picker";
+import { SellerAbout, SellerHeader } from "@/components/seller-profile";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { saveShop } from "@/lib/actions/shop";
+import type { SellerSummary } from "@/lib/sellers";
 import { showActionError } from "@/lib/forms";
 import { stageImage } from "@/lib/stage-image";
+import { cn } from "@/lib/utils";
 import {
   SHOP_LIMITS,
   shopSchema,
@@ -27,12 +31,15 @@ type ShopFormProps = {
   coverUrl?: string;
   siteUrl: string;
   onboarding?: boolean;
+  /** Saved shop + its ratings and live listings, for the Preview tab */
+  preview?: { seller: SellerSummary; reviews: React.ReactNode; listings: React.ReactNode };
 };
 
 type ImageField = "logo" | "cover";
 
-export function ShopForm({ defaults, logoUrl, coverUrl, siteUrl, onboarding }: ShopFormProps) {
+export function ShopForm({ defaults, logoUrl, coverUrl, siteUrl, onboarding, preview }: ShopFormProps) {
   const router = useRouter();
+  const [view, setView] = useState<"edit" | "preview">("edit");
   const [pending, startTransition] = useTransition();
   const [files, setFiles] = useState<Record<ImageField, File | null>>({ logo: null, cover: null });
   const [progress, setProgress] = useState<Record<ImageField, number | null>>({ logo: null, cover: null });
@@ -117,8 +124,8 @@ export function ShopForm({ defaults, logoUrl, coverUrl, siteUrl, onboarding }: S
     };
   }
 
-  return (
-    <form onSubmit={onSubmit} className="flex max-w-3xl flex-col gap-6" noValidate>
+  const formElement = (
+    <form onSubmit={onSubmit} hidden={view !== "edit"} className="flex max-w-3xl flex-col gap-6" noValidate>
       <div className="grid gap-5 sm:grid-cols-[10rem_1fr]">
         <FormField label="Logo" htmlFor="logo">
           <ImagePicker
@@ -237,5 +244,125 @@ export function ShopForm({ defaults, logoUrl, coverUrl, siteUrl, onboarding }: S
         {onboarding ? "Create my shop" : "Save shop"}
       </SubmitButton>
     </form>
+  );
+
+  if (!preview) return formElement;
+
+  // The form stays mounted (just hidden) so switching tabs keeps unsaved edits
+  return (
+    <div className="flex flex-col gap-6">
+      <div role="tablist" aria-label="Shop" className="flex w-fit gap-1 rounded-xl border bg-muted/50 p-1">
+        {([
+          { value: "edit", label: "Edit", icon: PencilIcon },
+          { value: "preview", label: "Preview", icon: EyeIcon },
+        ] as const).map(({ value, label, icon: Icon }) => (
+          <button
+            key={value}
+            type="button"
+            role="tab"
+            aria-selected={view === value}
+            onClick={() => setView(value)}
+            className={cn(
+              "flex min-h-10 items-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors",
+              view === value ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Icon className="size-4" /> {label}
+          </button>
+        ))}
+      </div>
+      {formElement}
+      {view === "preview" && (
+        <ShopPreview
+          form={form}
+          seller={preview.seller}
+          reviews={preview.reviews}
+          listings={preview.listings}
+          logo={files.logo}
+          cover={files.cover}
+          logoUrl={logoUrl}
+          coverUrl={coverUrl}
+          unsaved={hasUnsavedChanges}
+        />
+      )}
+    </div>
+  );
+}
+
+// Blob URL for a picked (not yet uploaded) image, released when it changes
+function useFileUrl(file: File | null) {
+  const url = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
+  useEffect(() => {
+    return () => {
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [url]);
+  return url;
+}
+
+// How the public /sellers/[slug] page will look, using the form's current
+// (possibly unsaved) values on top of the saved shop's ratings and listings
+function ShopPreview({
+  form,
+  seller,
+  reviews,
+  listings,
+  logo,
+  cover,
+  logoUrl,
+  coverUrl,
+  unsaved,
+}: {
+  form: UseFormReturn<ShopInput, unknown, ShopOutput>;
+  seller: SellerSummary;
+  reviews: React.ReactNode;
+  listings: React.ReactNode;
+  logo: File | null;
+  cover: File | null;
+  logoUrl?: string;
+  coverUrl?: string;
+  unsaved: boolean;
+}) {
+  const values = useWatch({ control: form.control });
+  const logoPreview = useFileUrl(logo);
+  const coverPreview = useFileUrl(cover);
+  const sold = Number(values.totalSold);
+
+  const live: SellerSummary = {
+    ...seller,
+    name: values.displayName?.trim() || seller.name,
+    slug: values.slug || seller.slug,
+    description: values.description?.trim() ?? "",
+    logoUrl: logoPreview ?? logoUrl ?? "",
+    coverUrl: coverPreview ?? coverUrl ?? "",
+    whatsappGroupUrl: values.whatsappGroupUrl?.trim() || null,
+    tiktokUrl: values.tiktokUrl?.trim() || null,
+    facebookUrl: values.facebookUrl?.trim() || null,
+    totalSold: Number.isFinite(sold) && sold >= 0 ? sold : seller.totalSold,
+  };
+
+  return (
+    <section aria-label="Shop preview" className="flex flex-col gap-3">
+      <p className="text-sm text-muted-foreground">
+        {unsaved
+          ? "Showing your unsaved changes. Save the shop to make them live."
+          : "This is how customers see your shop."}
+      </p>
+      {/* inert: links and buttons in the preview don't navigate away mid-edit */}
+      <div inert className="overflow-hidden rounded-xl border bg-background pb-8 select-none">
+        <SellerHeader seller={live} backLink={null} />
+        <div className="flex flex-col gap-10 px-4 pt-8">
+          <section className="flex flex-col gap-4">
+            <h2 className="text-xl font-bold">Ratings &amp; reviews</h2>
+            {reviews}
+          </section>
+          <SellerAbout description={live.description} />
+          <section className="flex flex-col gap-4">
+            <h2 className="text-xl font-bold">Accounts for sale</h2>
+            {listings}
+          </section>
+        </div>
+      </div>
+    </section>
   );
 }

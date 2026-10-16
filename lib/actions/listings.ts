@@ -59,6 +59,7 @@ export async function saveListing(formData: FormData): Promise<ActionResult<Save
     price: String(formData.get("price") ?? ""),
     region: String(formData.get("region") ?? ""),
     exchangeAvailable: formData.get("exchangeAvailable") === "true",
+    sellerId: isSuperAdmin ? String(formData.get("sellerId") ?? "") : "",
   };
   const parsed = listingFormSchema.safeParse(raw);
   if (!parsed.success) return invalid(parsed.error);
@@ -70,7 +71,7 @@ export async function saveListing(formData: FormData): Promise<ActionResult<Save
   const { data: existing } = id
     ? await supabase
         .from("listings")
-        .select("id, image_path, publish_status")
+        .select("id, image_path, publish_status, created_by")
         .eq("id", id)
         .maybeSingle()
     : { data: null };
@@ -85,6 +86,30 @@ export async function saveListing(formData: FormData): Promise<ActionResult<Save
     existing.publish_status !== "rejected"
   ) {
     return fail("Only drafts are autosaved.");
+  }
+
+  // A super admin can file the listing under any seller's shop; the trigger
+  // lets only super admins set created_by
+  let ownerId = existing?.created_by ?? profile.id;
+  if (isSuperAdmin && !values.sellerId && existing) {
+    // "FireVault": keep a listing that's already FireVault's with its owner;
+    // take one away from a seller's shop to this super admin
+    const { data: ownerShop } = await supabase
+      .from("seller_profiles")
+      .select("id")
+      .eq("id", existing.created_by)
+      .maybeSingle();
+    if (ownerShop) ownerId = profile.id;
+  } else if (isSuperAdmin && values.sellerId) {
+    const { data: shop } = await supabase
+      .from("seller_profiles")
+      .select("id")
+      .eq("id", values.sellerId)
+      .maybeSingle();
+    if (!shop) {
+      return { ok: false, error: "Choose a seller from the list.", fieldErrors: { sellerId: ["Choose a seller from the list"] } };
+    }
+    ownerId = shop.id;
   }
 
   const { data: settings } = await supabase.from("app_settings").select("regions").single();
@@ -146,6 +171,7 @@ export async function saveListing(formData: FormData): Promise<ActionResult<Save
     image_path: imagePath,
     publish_status: nextStatus,
     ...(intent === "publish" && isSuperAdmin ? { reviewed_by: profile.id, rejection_reason: null } : {}),
+    ...(isSuperAdmin ? { created_by: ownerId } : {}),
   };
 
   // The listings trigger has the final say on status (e.g. a sales admin
@@ -154,7 +180,7 @@ export async function saveListing(formData: FormData): Promise<ActionResult<Save
     ? await supabase.from("listings").update(row).eq("id", existing.id).select("id, publish_status").single()
     : await supabase
         .from("listings")
-        .insert({ ...row, created_by: profile.id })
+        .insert({ ...row, created_by: ownerId })
         .select("id, publish_status")
         .single();
 
@@ -175,11 +201,13 @@ export async function saveListing(formData: FormData): Promise<ActionResult<Save
       profile.id,
       !existing ? "listing.create" : AUDIT_BY_INTENT[intent as Exclude<ListingIntent, "autosave">],
       saved.id,
-      { status: saved.publish_status }
+      { status: saved.publish_status, ...(isSuperAdmin ? { owner: ownerId } : {}) }
     );
   }
   if (saved.publish_status === "published" || existing?.publish_status === "published") {
     updateTag(CACHE_TAGS.listings);
+    // Moving a live listing between shops changes their "for sale" counts
+    updateTag(CACHE_TAGS.sellers);
   }
 
   return ok({ id: saved.id, status: saved.publish_status, imageUrl: publicImageUrl(imagePath) });

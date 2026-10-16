@@ -8,6 +8,7 @@ import { SkeletonForm } from "@/components/skeletons";
 import { PublishStatusBadge } from "@/components/status-badge";
 import { requireStaff } from "@/lib/auth";
 import { publishesDirectly, salesAdminCanEdit } from "@/lib/listings";
+import { getSellerOptions } from "@/lib/seller-options";
 import { getSettings } from "@/lib/settings";
 import { publicImageUrl } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
@@ -43,7 +44,7 @@ async function EditListing({ params }: { params: Props["params"] }) {
   // RLS: sales admins can only load their own listings
   const { data: listing } = await supabase
     .from("listings")
-    .select("id, title, description, price, region, exchange_available, image_path, publish_status, rejection_reason")
+    .select("id, title, description, price, region, exchange_available, image_path, publish_status, rejection_reason, created_by")
     .eq("id", id)
     .maybeSingle();
   if (!listing) notFound();
@@ -64,12 +65,21 @@ async function EditListing({ params }: { params: Props["params"] }) {
     );
   }
 
+  const sellers = profile.role === "super_admin" ? await getSellerOptions() : undefined;
+  const { created_by: ownerId, ...fields } = listing;
+
   return (
     <ListingForm
       canPublish={publishesDirectly(profile)}
       regions={settings.regions}
       currency={settings.currency}
-      listing={{ ...listing, imageUrl: publicImageUrl(listing.image_path) }}
+      sellers={sellers}
+      listing={{
+        ...fields,
+        // Anything not owned by a seller shop shows as FireVault's own
+        sellerId: sellers?.some((seller) => seller.id === ownerId) ? ownerId : "",
+        imageUrl: publicImageUrl(listing.image_path),
+      }}
     />
   );
 }

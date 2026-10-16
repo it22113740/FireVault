@@ -6,11 +6,17 @@ import { StarRating } from "@/components/star-rating";
 import type { SellerSummary } from "@/lib/sellers";
 import { cn } from "@/lib/utils";
 
-export function SellerCard({ seller }: { seller: SellerSummary }) {
+export function SellerCard({
+  seller,
+  href = `/sellers/${seller.slug}`,
+}: {
+  seller: SellerSummary;
+  href?: string;
+}) {
   return (
     <TiltCard>
       <Link
-        href={`/sellers/${seller.slug}`}
+        href={href}
         className={cn(
           "group flex h-full flex-col overflow-hidden rounded-xl border bg-card transition duration-200",
           "hover:border-primary/50 hover:shadow-[0_12px_32px_-16px_var(--brand-from)] md:hover:-translate-y-1",

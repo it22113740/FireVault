@@ -19,6 +19,7 @@ import { saveListing } from "@/lib/actions/listings";
 import { showActionError } from "@/lib/forms";
 import { stageImage } from "@/lib/stage-image";
 import { LISTING_IMAGE_SIZE, type PublishStatus } from "@/lib/listings";
+import type { SellerOption } from "@/lib/seller-options";
 import { formatPriceInput } from "@/lib/validations/common";
 import {
   LISTING_LIMITS,
@@ -37,6 +38,8 @@ export type EditableListing = {
   price: number;
   region: string;
   exchange_available: boolean;
+  /** Owning seller shop, "" when it's FireVault's own (super admin) */
+  sellerId: string;
   imageUrl: string;
   publish_status: PublishStatus;
   rejection_reason: string | null;
@@ -45,6 +48,8 @@ export type EditableListing = {
 type ListingFormProps = {
   /** Super admin, or a seller whose listings skip review */
   canPublish: boolean;
+  /** Super admin only: shops the listing can be filed under */
+  sellers?: SellerOption[];
   regions: string[];
   currency: string;
   listing?: EditableListing;
@@ -67,7 +72,7 @@ export function ListingForm(props: ListingFormProps) {
   return <ListingFormFields key={bfcacheId} {...props} />;
 }
 
-function ListingFormFields({ canPublish, regions, currency, listing }: ListingFormProps) {
+function ListingFormFields({ canPublish, sellers, regions, currency, listing }: ListingFormProps) {
   const router = useRouter();
   const [id, setId] = useState(listing?.id ?? null);
   const [status, setStatus] = useState<PublishStatus | null>(listing?.publish_status ?? null);
@@ -90,6 +95,7 @@ function ListingFormFields({ canPublish, regions, currency, listing }: ListingFo
       price: listing?.price ? formatPriceInput(String(listing.price)) : "",
       region: listing?.region ?? "",
       exchangeAvailable: listing?.exchange_available ?? false,
+      sellerId: listing?.sellerId ?? "",
     },
   });
   const { errors, isDirty } = form.formState;
@@ -275,6 +281,29 @@ function ListingFormFields({ canPublish, regions, currency, listing }: ListingFo
               {...form.register("description")}
             />
           </FormField>
+
+          {sellers && (
+            <FormField
+              label="Seller"
+              htmlFor="sellerId"
+              hint="Customers see this shop on the listing and message its WhatsApp. The seller can then manage it from their dashboard."
+              error={errors.sellerId?.message}
+            >
+              <NativeSelect
+                id="sellerId"
+                className="w-full [&_select]:h-11"
+                aria-invalid={!!errors.sellerId}
+                {...form.register("sellerId")}
+              >
+                <NativeSelectOption value="">FireVault (no seller shop)</NativeSelectOption>
+                {sellers.map((seller) => (
+                  <NativeSelectOption key={seller.id} value={seller.id}>
+                    {seller.active ? seller.name : `${seller.name} (inactive)`}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            </FormField>
+          )}
 
           <div className="grid gap-5 sm:grid-cols-2">
             <PriceField form={form} currency={currency} error={errors.price?.message} />

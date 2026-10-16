@@ -11,6 +11,8 @@ import {
   MenuIcon,
   MegaphoneIcon,
   SettingsIcon,
+  ShoppingBagIcon,
+  StarIcon,
   StoreIcon,
   UserCircleIcon,
   UserPlusIcon,
@@ -32,7 +34,9 @@ const SELLER: Role[] = ["sales_admin"];
 const NAV: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboardIcon, roles: BOTH },
   { href: "/admin/shop", label: "My shop", icon: StoreIcon, roles: SELLER },
+  { href: "/admin/ratings", label: "Reviews & ratings", icon: StarIcon, roles: SELLER },
   { href: "/admin/listings", label: "Listings", icon: ListIcon, roles: BOTH },
+  { href: "/admin/sellers", label: "Sellers", icon: ShoppingBagIcon, roles: BOTH },
   { href: "/admin/review", label: "Review queue", icon: ClipboardCheckIcon, roles: SUPER },
   { href: "/admin/applications", label: "Applications", icon: UserPlusIcon, roles: SUPER },
   { href: "/admin/sales-admins", label: "Sales admins", icon: UsersIcon, roles: SUPER },

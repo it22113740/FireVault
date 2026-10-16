@@ -100,6 +100,26 @@ async function getSellerBySlugCached(slug: string) {
   return data ? toSeller(data) : null;
 }
 
+// For the seller's own dashboard pages, which know their id, not their slug
+export async function getSellerById(id: string) {
+  await connection();
+  return getSellerByIdCached(id);
+}
+
+async function getSellerByIdCached(id: string) {
+  "use cache";
+  cacheTag(CACHE_TAGS.sellers, CACHE_TAGS.listings);
+  cacheLife("hours");
+
+  const { data, error } = await createPublicClient()
+    .from("seller_directory")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(`Failed to load seller: ${error.message}`);
+  return data ? toSeller(data) : null;
+}
+
 export async function getSellerReviews(sellerId: string) {
   await connection();
   return getSellerReviewsCached(sellerId);

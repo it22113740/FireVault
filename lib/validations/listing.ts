@@ -18,6 +18,9 @@ export const listingFormSchema = z.object({
   region: z.string().trim().max(20),
   // Seller is open to swapping for another account
   exchangeAvailable: z.boolean(),
+  // Super admin only: the seller shop the listing belongs to ("" = FireVault's
+  // own). Ignored for sales admins, whose listings are always their own.
+  sellerId: z.union([z.literal(""), z.uuid("Choose a seller from the list")]),
 });
 export type ListingFormValues = z.input<typeof listingFormSchema>;
 
