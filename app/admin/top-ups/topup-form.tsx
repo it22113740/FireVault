@@ -35,15 +35,19 @@ export type EditableTopup = {
   published: boolean;
 };
 
-export function TopupForm({
-  currency,
-  topup,
-  defaultCategory,
-}: {
+type TopupFormProps = {
   currency: string;
   topup?: EditableTopup;
   defaultCategory: TopupCategory;
-}) {
+};
+
+// Reset on each fresh visit; see ListingForm for why.
+export function TopupForm(props: TopupFormProps) {
+  const { bfcacheId } = useRouter();
+  return <TopupFormFields key={bfcacheId} {...props} />;
+}
+
+function TopupFormFields({ currency, topup, defaultCategory }: TopupFormProps) {
   const router = useRouter();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageError, setImageError] = useState<string>();

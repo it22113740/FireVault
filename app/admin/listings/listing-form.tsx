@@ -58,7 +58,16 @@ const SAVED_MESSAGE: Record<PublishStatus, string> = {
   archived: "Saved.",
 };
 
-export function ListingForm({ role, regions, currency, listing }: ListingFormProps) {
+// cacheComponents keeps visited routes alive in a hidden <Activity>, so without
+// this key a second "New listing" visit would show the last listing's values
+// (and its id, so saving would overwrite it). bfcacheId changes on every
+// push/replace navigation but not on back/forward, so drafts survive Back.
+export function ListingForm(props: ListingFormProps) {
+  const { bfcacheId } = useRouter();
+  return <ListingFormFields key={bfcacheId} {...props} />;
+}
+
+function ListingFormFields({ role, regions, currency, listing }: ListingFormProps) {
   const router = useRouter();
   const isSuperAdmin = role === "super_admin";
   const [id, setId] = useState(listing?.id ?? null);
