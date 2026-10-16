@@ -42,11 +42,11 @@ export function OrderList({
   focusId,
 }: {
   orders: OrderRow[];
-  status: Enums<"topup_order_status">;
+  status: Enums<"topup_order_status"> | "all";
   focusId: string | null;
 }) {
   const reduce = useReducedMotion();
-  if (orders.length === 0) return <EmptyState icon={ReceiptIcon} title={EMPTY[status]} />;
+  if (orders.length === 0) return <EmptyState icon={ReceiptIcon} title={status === "all" ? "No top-up orders yet." : EMPTY[status]} />;
 
   // Closed/reopened cards slide out when the refreshed list drops them
   return (

@@ -536,6 +536,10 @@ export type Database = {
       };
     };
     Views: {
+      customer_topup_totals: {
+        Row: { customer_id: string; currency: string; order_count: number; total_amount: number };
+        Relationships: [];
+      };
       // Same columns as published_listings: each seller's newest available one
       latest_listing_per_seller: {
         Row: Database["public"]["Views"]["published_listings"]["Row"];
