@@ -144,7 +144,9 @@ function ListingFormFields({ canPublish, regions, currency, listing }: ListingFo
         setImageFile((current) => (current === file ? null : current));
         setImageUrl(result.data.imageUrl);
       }
-      form.reset(values, { keepErrors: true });
+      // Mark the snapshot as saved without writing it back into the inputs:
+      // anything typed while the save was in flight stays and is still dirty
+      form.reset(values, { keepValues: true, keepErrors: true });
       setLastAutosave(new Date());
     }, AUTOSAVE_MS);
     return () => clearInterval(timer);
