@@ -30,6 +30,7 @@ export type Database = {
           bank_account_number: string;
           bank_branch: string;
           bank_name: string;
+          sell_contact_seller_ids: string[];
           currency: string;
           id: number;
           inactive_message: string;
@@ -41,6 +42,7 @@ export type Database = {
           bank_account_number?: string;
           bank_branch?: string;
           bank_name?: string;
+          sell_contact_seller_ids?: string[];
           currency?: string;
           id?: number;
           inactive_message?: string;
@@ -52,6 +54,7 @@ export type Database = {
           bank_account_number?: string;
           bank_branch?: string;
           bank_name?: string;
+          sell_contact_seller_ids?: string[];
           currency?: string;
           id?: number;
           inactive_message?: string;

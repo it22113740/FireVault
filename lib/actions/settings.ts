@@ -33,6 +33,7 @@ export async function updateSettings(input: SettingsInput): Promise<ActionResult
       bank_account_number: parsed.data.bankAccountNumber,
       bank_name: parsed.data.bankName,
       bank_branch: parsed.data.bankBranch,
+      sell_contact_seller_ids: parsed.data.sellContactSellerIds,
     })
     .eq("id", 1);
   if (error) return fail("Couldn't save the settings. Please try again.");

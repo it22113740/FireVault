@@ -34,6 +34,8 @@ export const settingsSchema = z.object({
     .regex(/^[0-9 -]{0,30}$/, "Use digits only (spaces and dashes are fine)"),
   bankName: z.string().trim().max(100, "Keep it under 100 characters"),
   bankBranch: z.string().trim().max(100, "Keep it under 100 characters"),
+  // Sellers in the homepage "Want to sell account?" window, in order
+  sellContactSellerIds: z.array(z.uuid("Choose sellers from the list")).max(30, "Choose up to 30 sellers"),
 }).superRefine((value, ctx) => {
   const fields = ["bankAccountName", "bankAccountNumber", "bankName", "bankBranch"] as const;
   const filled = fields.filter((field) => value[field] !== "");

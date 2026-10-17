@@ -29,10 +29,8 @@ const DETAILS: Record<TopupCategory, { text: string; icon: LucideIcon }> = {
   level_up_pass: { text: "Explore level up passes for your game ID.", icon: ZapIcon },
 };
 
-const STEPS = ["Pick a pack", "Send your UID on WhatsApp", "Get it delivered"];
-
 // Home page top-up banner: what's on offer per category (live pack counts
-// and starting prices), how ordering works, and a WhatsApp shortcut.
+// and starting prices) and a WhatsApp shortcut.
 export function TopupShowcase({
   categories,
   currency,
@@ -57,22 +55,6 @@ export function TopupShowcase({
             Memberships, VIP bundles, diamonds and level up passes for your game ID. Choose a pack, send us your UID
             on WhatsApp and we&apos;ll deliver it once your payment is confirmed.
           </p>
-
-          <ol className="flex flex-wrap items-center gap-2 font-semibold">
-            {STEPS.map((step, index) => (
-              <li key={step} className="flex items-center gap-2">
-                <span className="flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-sm">
-                  <span className="flex size-5 items-center justify-center rounded-full bg-brand text-xs text-primary-foreground">
-                    {index + 1}
-                  </span>
-                  {step}
-                </span>
-                {index < STEPS.length - 1 && (
-                  <ArrowRightIcon className="size-4 text-muted-foreground" />
-                )}
-              </li>
-            ))}
-          </ol>
 
           <div className="flex flex-wrap gap-3">
             <Button

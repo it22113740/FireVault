@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { FormField } from "@/components/form-field";
 import { SubmitButton } from "@/components/submit-button";
@@ -16,7 +16,9 @@ import {
   type SettingsOutput,
 } from "@/lib/validations/settings";
 
-export function SettingsForm({ defaults }: { defaults: SettingsInput }) {
+type SellerChoice = { id: string; name: string; hasWhatsapp: boolean };
+
+export function SettingsForm({ defaults, sellers }: { defaults: SettingsInput; sellers: SellerChoice[] }) {
   const [pending, startTransition] = useTransition();
   const form = useForm<SettingsInput, unknown, SettingsOutput>({
     resolver: zodResolver(settingsSchema),
@@ -131,9 +133,77 @@ export function SettingsForm({ defaults }: { defaults: SettingsInput }) {
           </FormField>
         </div>
       </fieldset>
+      <Controller
+        control={form.control}
+        name="sellContactSellerIds"
+        render={({ field }) => (
+          <SellContactSellers
+            sellers={sellers}
+            value={field.value}
+            onChange={field.onChange}
+            error={errors.sellContactSellerIds?.message}
+          />
+        )}
+      />
       <SubmitButton size="lg" className="h-11 w-fit" pending={pending} pendingLabel="Saving…">
         Save settings
       </SubmitButton>
     </form>
+  );
+}
+
+// Homepage "Want to sell account?" window: only these sellers are listed,
+// in the order they're ticked
+function SellContactSellers({
+  sellers,
+  value,
+  onChange,
+  error,
+}: {
+  sellers: SellerChoice[];
+  value: string[];
+  onChange: (value: string[]) => void;
+  error?: string;
+}) {
+  return (
+    <fieldset className="flex flex-col gap-3 rounded-xl border p-4">
+      <legend className="px-1 text-sm font-medium">&ldquo;Want to sell account?&rdquo; sellers</legend>
+      <p className="-mt-1 text-xs text-muted-foreground">
+        Customers who want to sell their account choose one of these sellers on the homepage and chat with them on
+        WhatsApp. None ticked hides the button.
+      </p>
+      {sellers.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No seller shops yet.</p>
+      ) : (
+        <ul className="flex max-h-64 flex-col divide-y overflow-y-auto rounded-lg border bg-card">
+          {sellers.map((seller) => {
+            const position = value.indexOf(seller.id);
+            const checked = position !== -1;
+            return (
+              <li key={seller.id}>
+                <label className="flex min-h-11 cursor-pointer items-center gap-3 px-3 py-2 text-sm hover:bg-accent/50">
+                  <input
+                    type="checkbox"
+                    className="size-4 accent-primary"
+                    checked={checked}
+                    onChange={(event) =>
+                      onChange(event.target.checked ? [...value, seller.id] : value.filter((id) => id !== seller.id))
+                    }
+                  />
+                  <span className="min-w-0 flex-1 truncate">
+                    {seller.name}
+                    {!seller.hasWhatsapp && <span className="text-warning"> (no WhatsApp number)</span>}
+                  </span>
+                  {checked && value.length > 1 && (
+                    <span className="text-xs text-muted-foreground tabular-nums">#{position + 1}</span>
+                  )}
+                </label>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {error && <p className="text-sm text-destructive">{error}</p>}
+    </fieldset>
   );
 }

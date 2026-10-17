@@ -161,9 +161,12 @@ function LatestSkeleton() {
   );
 }
 
-// Show the full seller directory so customers choose who to contact.
+// Only the sellers the super admin picked in Settings, in that order; hidden
+// when none are picked
 async function HeroWhatsApp() {
-  const sellers = await getSellers();
+  const [allSellers, settings] = await Promise.all([getSellers(), getSettings()]);
+  const sellers = settings.sell_contact_seller_ids.flatMap((id) => allSellers.filter((seller) => seller.id === id));
+  if (sellers.length === 0) return null;
   return (
     <SellerWhatsAppPicker
       sellers={sellers}
@@ -211,9 +214,6 @@ async function TopSellers() {
           <h2 className="text-2xl font-bold sm:text-3xl">Top sellers</h2>
           <p className="mt-1 text-base font-medium text-muted-foreground">Rated and reviewed by customers.</p>
         </div>
-        <Link href="/sellers" className="flex min-h-11 items-center gap-1 text-sm text-primary hover:underline">
-          All sellers <ArrowRightIcon className="size-4" />
-        </Link>
       </Reveal>
       {/* Best rated first; the strip shows the top 20 */}
       <SellerMarquee sellers={sellers.slice(0, 20)} />

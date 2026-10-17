@@ -1,6 +1,5 @@
 export const PUBLIC_NAV = [
   { href: "/accounts", label: "Accounts" },
-  { href: "/sellers", label: "Sellers" },
   { href: "/top-ups", label: "Top-ups" },
   { href: "/updates", label: "Updates" },
   { href: "/how-to-buy", label: "How to buy" },

@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Logo } from "@/components/site-header";
 import { PUBLIC_NAV, SELLER_CTA } from "@/lib/nav";
 
-const LINKS = [...PUBLIC_NAV, SELLER_CTA, { href: "/login", label: "Seller login" }];
+// Sellers stays reachable from the footer though it's not in the top nav
+const LINKS = [...PUBLIC_NAV, { href: "/sellers", label: "Sellers" }, SELLER_CTA, { href: "/login", label: "Seller login" }];
 
 export function SiteFooter() {
   return (
