@@ -2,6 +2,7 @@
 
 import { refresh } from "next/cache";
 import { after } from "next/server";
+import sharp from "sharp";
 import { fail, invalid, ok, type ActionResult } from "@/lib/actions/result";
 import { logAudit } from "@/lib/audit";
 import { getCurrentProfile, requireSuperAdmin, type Profile } from "@/lib/auth";
@@ -85,11 +86,40 @@ export async function placeTopupOrder(formData: FormData): Promise<ActionResult<
   }
 
   // Alerts go out after the response so the customer isn't kept waiting
-  after(() => notifyNewOrder(saved, customer, settings.admin_whatsapp));
+  after(() => notifyNewOrder(saved, customer, settings.admin_whatsapp, { path: image.path, webp: image.body }));
   return ok({ id: saved.id });
 }
 
-async function notifyNewOrder(order: PlacedOrder, customer: Profile | null, adminWhatsapp: string) {
+// The WhatsApp alert carries the receipt image. WhatsApp shows WebP as a
+// sticker, so a JPEG copy is saved next to the receipt and sent through a
+// signed URL that works for RECEIPT_LINK_TTL.
+const RECEIPT_LINK_TTL = 7 * 24 * 60 * 60;
+
+async function receiptImageLink(receipt: { path: string; webp: Buffer }) {
+  try {
+    const jpegPath = receipt.path.replace(/\.webp$/, ".jpg");
+    const jpeg = await sharp(receipt.webp).flatten({ background: "#ffffff" }).jpeg({ quality: 80 }).toBuffer();
+    const storage = createAdminClient().storage.from(RECEIPTS_BUCKET);
+    const { error } = await storage.upload(jpegPath, jpeg, { contentType: "image/jpeg", upsert: true });
+    if (error) throw new Error(error.message);
+    const { data, error: signError } = await storage.createSignedUrl(jpegPath, RECEIPT_LINK_TTL);
+    if (signError || !data) throw new Error(signError?.message ?? "No signed URL");
+    // The media template's URL is fixed up to ".../object/sign/receipts/";
+    // {{7}} is the rest (file path + token)
+    const [, variable] = data.signedUrl.split(`/object/sign/${RECEIPTS_BUCKET}/`);
+    return variable ? { url: data.signedUrl, variable } : null;
+  } catch (error) {
+    console.error("Order alert: couldn't prepare the receipt image", error);
+    return null;
+  }
+}
+
+async function notifyNewOrder(
+  order: PlacedOrder,
+  customer: Profile | null,
+  adminWhatsapp: string,
+  receipt: { path: string; webp: Buffer }
+) {
   const link = `${SITE_URL}/admin/orders?order=${order.id}`;
   const item = `${order.topup_name} × ${order.quantity}`;
   const total = formatPrice(order.total, order.currency);
@@ -105,17 +135,29 @@ async function notifyNewOrder(order: PlacedOrder, customer: Profile | null, admi
   ];
 
   try {
+    const image = await receiptImageLink(receipt);
+    const variables: Record<string, string> = {
+      "1": shortId(order.id),
+      "2": item,
+      "3": total,
+      "4": order.player_uid,
+      "5": order.whatsapp_number,
+      "6": link,
+    };
+    // Media template (receipt as the header image) when set up, else the text
+    // template, else a plain message with the image (Sandbox)
+    const mediaTemplate = process.env.TWILIO_ORDER_MEDIA_TEMPLATE_SID;
+    const textTemplate = process.env.TWILIO_ORDER_TEMPLATE_SID;
     const whatsapped = await sendWhatsApp({
       to: adminWhatsapp,
       body: ["New FireVault top-up order", "", ...lines].join("\n"),
-      templateVariables: {
-        "1": shortId(order.id),
-        "2": item,
-        "3": total,
-        "4": order.player_uid,
-        "5": order.whatsapp_number,
-        "6": link,
-      },
+      mediaUrl: image?.url,
+      template:
+        mediaTemplate && image
+          ? { sid: mediaTemplate, variables: { ...variables, "7": image.variable } }
+          : textTemplate
+            ? { sid: textTemplate, variables }
+            : undefined,
     });
     if (!whatsapped) console.error("Order alert: WhatsApp not sent", order.id);
 

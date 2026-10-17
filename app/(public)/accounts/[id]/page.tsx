@@ -60,7 +60,13 @@ async function AccountDetail({ params }: { params: Props["params"] }) {
   // A shared listing is sold by several shops: the buyer picks one below
   const shared = listing.sellers.length > 1;
   const whatsapp = shared ? (
-    <SellerWhatsAppPicker sellers={listing.sellers} message={message} disabled={reserved} className="w-full" />
+    <SellerWhatsAppPicker
+      sellers={listing.sellers}
+      message={message}
+      description={`${listing.sellers.length} sellers offer this same account. Message the one you'd like to buy from.`}
+      disabled={reserved}
+      className="w-full"
+    />
   ) : (
     <WhatsAppButton number={listing.whatsappNumber} message={message} disabled={reserved} className="w-full" />
   );
