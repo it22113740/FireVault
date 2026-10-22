@@ -11,6 +11,12 @@ export type Database = {
   };
   public: {
     Tables: {
+      sales_admin_notifications: {
+        Row: { id: string; profile_id: string; reason: "expired" | "admin"; due_at: string; next_attempt_at: string; sent_at: string | null; cancelled_at: string | null };
+        Insert: { id?: string; profile_id: string; reason: "expired" | "admin"; due_at: string; next_attempt_at: string; sent_at?: string | null; cancelled_at?: string | null };
+        Update: { next_attempt_at?: string; sent_at?: string | null; cancelled_at?: string | null };
+        Relationships: [];
+      };
       announcements: {
         Row: { id: string; title: string; image_path: string; published: boolean; created_at: string };
         Insert: { id?: string; title: string; image_path: string; published?: boolean; created_at?: string };

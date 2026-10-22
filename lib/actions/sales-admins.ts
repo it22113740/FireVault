@@ -4,6 +4,7 @@ import { refresh } from "next/cache";
 import { fail, ok, type ActionResult } from "@/lib/actions/result";
 import { logAudit } from "@/lib/audit";
 import { requireSuperAdmin } from "@/lib/auth";
+import { sendSalesAdminNotifications } from "@/lib/sales-admin-notifications";
 import { accessExpiryFromNow } from "@/lib/sales-admin-access";
 import { createClient } from "@/lib/supabase/server";
 import { uuidSchema } from "@/lib/validations/common";
@@ -26,6 +27,14 @@ export async function setSalesAdminActive(id: string, active: boolean): Promise<
     .select("id");
   if (error || data.length === 0) return fail("Couldn't update this sales admin.");
 
+  if (!active) {
+    try {
+      await sendSalesAdminNotifications(id);
+    } catch (error) {
+      // The database queue persists the notification for the scheduled retry.
+      console.error("Sales admin deactivation email failed", error);
+    }
+  }
   await logAudit(actor.id, active ? "salesadmin.activate" : "salesadmin.deactivate", id);
   refresh();
   return ok();

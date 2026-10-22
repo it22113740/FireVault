@@ -32,3 +32,22 @@ and `RESEND_API_KEY` + `EMAIL_FROM` email applicants who are denied.
 
 After schema changes, regenerate types:
 `npx supabase gen types typescript --linked > lib/database.types.ts`
+
+## Salesperson deactivation emails
+
+Apply `20261103000000_sales_admin_email_notifications.sql`, and configure
+`RESEND_API_KEY`, `EMAIL_FROM`, and a strong random `CRON_SECRET` in production.
+Admin deactivation queues an email in the same database transaction and attempts
+immediate delivery. Expiry emails are scheduled when access is granted or renewed;
+renewal cancels the previous pending expiry email. Existing active accounts are
+scheduled by the migration, including accounts whose access has already expired.
+
+`vercel.json` schedules `/api/cron/sales-admin-notifications` every five minutes
+(requires a hosting plan supporting that frequency). On other hosts, configure a
+scheduler to GET that endpoint every five minutes with the header
+`Authorization: Bearer <CRON_SECRET>`. Expiry notifications do not require login.
+The worker sends up to 10 emails per run, retries failures after five minutes,
+and uses a lease plus a Resend idempotency key to protect against duplicate sends.
+Resend's idempotency window is finite, so a prolonged database outage after a
+successful send can still result in a duplicate on retry. Monitor job failures
+(HTTP 503/500); missing email configuration leaves emails queued for retry.

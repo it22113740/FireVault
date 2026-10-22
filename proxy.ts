@@ -13,6 +13,10 @@ const ONBOARDING_PATH = "/admin/onboarding";
 //  * sales admins must create their shop profile before using /admin
 // Pages and actions re-check with requireRole().
 export async function proxy(request: NextRequest) {
+  // This endpoint authenticates the scheduler using CRON_SECRET.
+  if (request.nextUrl.pathname === "/api/cron/sales-admin-notifications") {
+    return NextResponse.next();
+  }
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient<Database>(
