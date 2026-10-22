@@ -42,12 +42,17 @@ immediate delivery. Expiry emails are scheduled when access is granted or renewe
 renewal cancels the previous pending expiry email. Existing active accounts are
 scheduled by the migration, including accounts whose access has already expired.
 
-`vercel.json` schedules `/api/cron/sales-admin-notifications` every five minutes
-(requires a hosting plan supporting that frequency). On other hosts, configure a
-scheduler to GET that endpoint every five minutes with the header
-`Authorization: Bearer <CRON_SECRET>`. Expiry notifications do not require login.
-The worker sends up to 10 emails per run, retries failures after five minutes,
-and uses a lease plus a Resend idempotency key to protect against duplicate sends.
+`vercel.json` schedules `/api/cron/sales-admin-notifications` once daily with
+`0 0 * * *` (UTC), compatible with Vercel Hobby. Expiry emails and failed-delivery
+retries wait until the next scheduled run; admin deactivation still attempts an
+immediate email. The worker processes up to 10 notifications per run, so larger
+queues can take additional days to drain.
+
+For faster delivery, use an external scheduler to GET the endpoint every five
+minutes with `Authorization: Bearer <CRON_SECRET>`, or change the Vercel schedule
+to `*/5 * * * *` on a plan supporting that frequency. Expiry notifications do not
+require login. Failed deliveries become eligible for retry after five minutes.
+The worker uses a lease plus a Resend idempotency key to protect against duplicate sends.
 Resend's idempotency window is finite, so a prolonged database outage after a
 successful send can still result in a duplicate on retry. Monitor job failures
 (HTTP 503/500); missing email configuration leaves emails queued for retry.
