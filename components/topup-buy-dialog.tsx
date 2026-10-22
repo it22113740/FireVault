@@ -3,7 +3,18 @@
 import { useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import { CheckCircle2Icon, CheckIcon, CopyIcon, LandmarkIcon, MinusIcon, PlusIcon, ShoppingCartIcon } from "lucide-react";
+import {
+  CheckCircle2Icon,
+  CheckIcon,
+  CopyIcon,
+  LandmarkIcon,
+  MinusIcon,
+  PlusIcon,
+  ShoppingCartIcon,
+  SmartphoneIcon,
+  WalletIcon,
+  type LucideIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 import { FormField } from "@/components/form-field";
 import { ImagePicker } from "@/components/image-picker";
@@ -14,7 +25,17 @@ import { Input } from "@/components/ui/input";
 import { placeTopupOrder } from "@/lib/actions/topup-orders";
 import { formatPrice, shortId } from "@/lib/format";
 import { showActionError } from "@/lib/forms";
+import {
+  EZCASH_LANGUAGES,
+  PAYMENT_METHODS,
+  availablePaymentMethods,
+  type BankAccount,
+  type EzCashLanguage,
+  type PaymentMethod,
+  type PaymentOptions,
+} from "@/lib/payments";
 import { shrinkImage } from "@/lib/shrink-image";
+import { cn } from "@/lib/utils";
 import {
   MAX_ORDER_QUANTITY,
   topupOrderSchema,
@@ -22,22 +43,28 @@ import {
   type TopupOrderOutput,
 } from "@/lib/validations/topup-order";
 
-export type BankDetails = { accountName: string; accountNumber: string; bankName: string; branch: string };
-
 type TopupBuyDialogProps = {
   topup: { id: string; name: string; price: number };
   currency: string;
-  /** null when the super admin hasn't set a bank account yet */
-  bank: BankDetails | null;
+  /** What the super admin set up in Settings; possibly nothing yet */
+  payments: PaymentOptions;
   /** Pre-fills the WhatsApp field from the customer's profile */
   defaultWhatsapp: string;
 };
 
-// Bank details first (so the customer can pay), then UID, quantity, WhatsApp
-// and the receipt. Opens from the top-up card's Buy button.
-export function TopupBuyDialog({ topup, currency, bank, defaultWhatsapp }: TopupBuyDialogProps) {
+const METHOD_ICONS: Record<PaymentMethod, LucideIcon> = {
+  bank: LandmarkIcon,
+  ezcash: SmartphoneIcon,
+  binance: WalletIcon,
+};
+
+// Payment method and its details first (so the customer can pay), then UID,
+// quantity, WhatsApp and the proof of payment. Opens from the top-up card's
+// Buy button.
+export function TopupBuyDialog({ topup, currency, payments, defaultWhatsapp }: TopupBuyDialogProps) {
   const [open, setOpen] = useState(false);
   const [placedId, setPlacedId] = useState<string | null>(null);
+  const methods = availablePaymentMethods(payments);
 
   return (
     <>
@@ -59,12 +86,17 @@ export function TopupBuyDialog({ topup, currency, bank, defaultWhatsapp }: Topup
             <>
               <div className="flex flex-col gap-1 pr-8">
                 <DialogTitle className="font-heading text-lg">Buy {topup.name}</DialogTitle>
-                <DialogDescription>
-                  Transfer the total to the account below, then send us your details and the receipt.
-                </DialogDescription>
+                <DialogDescription>Pay the total, then send us your details and proof of payment.</DialogDescription>
               </div>
-              {bank ? (
-                <BuyForm topup={topup} currency={currency} bank={bank} defaultWhatsapp={defaultWhatsapp} onPlaced={setPlacedId} />
+              {methods.length > 0 ? (
+                <BuyForm
+                  topup={topup}
+                  currency={currency}
+                  payments={payments}
+                  methods={methods}
+                  defaultWhatsapp={defaultWhatsapp}
+                  onPlaced={setPlacedId}
+                />
               ) : (
                 <p className="rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm">
                   Online payments aren&apos;t set up yet. Please message us on WhatsApp to order this top-up.
@@ -81,10 +113,11 @@ export function TopupBuyDialog({ topup, currency, bank, defaultWhatsapp }: Topup
 function BuyForm({
   topup,
   currency,
-  bank,
+  payments,
+  methods,
   defaultWhatsapp,
   onPlaced,
-}: Omit<TopupBuyDialogProps, "bank"> & { bank: BankDetails; onPlaced: (id: string) => void }) {
+}: TopupBuyDialogProps & { methods: PaymentMethod[]; onPlaced: (id: string) => void }) {
   const [pending, startTransition] = useTransition();
   const [receipt, setReceipt] = useState<File | null>(null);
   const [receiptError, setReceiptError] = useState<string>();
@@ -92,14 +125,21 @@ function BuyForm({
   const form = useForm<TopupOrderInput, unknown, TopupOrderOutput>({
     resolver: zodResolver(topupOrderSchema),
     mode: "onTouched",
-    defaultValues: { topupId: topup.id, playerUid: "", quantity: 1, whatsappNumber: defaultWhatsapp },
+    defaultValues: {
+      topupId: topup.id,
+      playerUid: "",
+      quantity: 1,
+      whatsappNumber: defaultWhatsapp,
+      paymentMethod: methods[0],
+    },
   });
   const { errors } = form.formState;
-  const quantity = useWatch({ control: form.control, name: "quantity" });
+  const [quantity, method] = useWatch({ control: form.control, name: ["quantity", "paymentMethod"] });
   const total = formatPrice(topup.price * quantity, currency);
+  const proof = PAYMENT_METHODS.find((option) => option.value === method)!;
 
   const onSubmit = form.handleSubmit((values) => {
-    if (!receipt) return setReceiptError("Add a photo or screenshot of your payment receipt");
+    if (!receipt) return setReceiptError(`Add the ${proof.proof.toLowerCase()}`);
 
     startTransition(async () => {
       let file: File;
@@ -114,6 +154,7 @@ function BuyForm({
       formData.set("playerUid", values.playerUid);
       formData.set("quantity", String(values.quantity));
       formData.set("whatsappNumber", values.whatsappNumber);
+      formData.set("paymentMethod", values.paymentMethod);
       formData.set("receipt", file);
 
       const result = await placeTopupOrder(formData);
@@ -128,7 +169,16 @@ function BuyForm({
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
-      <BankPanel bank={bank} total={total} />
+      {methods.length > 1 && (
+        <Controller
+          control={form.control}
+          name="paymentMethod"
+          render={({ field }) => <MethodPicker methods={methods} value={field.value} onChange={field.onChange} />}
+        />
+      )}
+      {method === "bank" && <BankPanel accounts={payments.bank} total={total} />}
+      {method === "ezcash" && payments.ezcash && <EzCashPanel ezcash={payments.ezcash} total={total} />}
+      {method === "binance" && payments.binance && <BinancePanel binance={payments.binance} total={total} />}
 
       <FormField
         label="Player UID"
@@ -208,11 +258,11 @@ function BuyForm({
         />
       </FormField>
 
-      <FormField label="Payment receipt" htmlFor="receipt" hint="A photo or screenshot of the bank transfer.">
+      <FormField label={proof.proof} htmlFor="receipt" hint={proof.proofHint}>
         <ImagePicker
           id="receipt"
           aspect="4/3"
-          label="Add receipt"
+          label="Add screenshot or photo"
           maxMb={20}
           file={receipt}
           onFileChange={(file) => {
@@ -230,29 +280,150 @@ function BuyForm({
   );
 }
 
-function BankPanel({ bank, total }: { bank: BankDetails; total: string }) {
+// Radio buttons styled as tiles; shown only when more than one method is set up
+function MethodPicker({
+  methods,
+  value,
+  onChange,
+}: {
+  methods: PaymentMethod[];
+  value: PaymentMethod;
+  onChange: (method: PaymentMethod) => void;
+}) {
+  return (
+    <fieldset>
+      <legend className="mb-2 text-sm font-medium">How will you pay?</legend>
+      <div className="grid grid-cols-3 gap-2">
+        {PAYMENT_METHODS.filter((option) => methods.includes(option.value)).map((option) => {
+          const Icon = METHOD_ICONS[option.value];
+          return (
+            <label
+              key={option.value}
+              className={cn(
+                "flex min-h-16 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border p-2 text-center text-sm font-medium transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
+                value === option.value ? "border-primary bg-primary/10 text-primary" : "hover:bg-accent/50"
+              )}
+            >
+              <input
+                type="radio"
+                name="paymentMethod"
+                value={option.value}
+                checked={value === option.value}
+                onChange={() => onChange(option.value)}
+                className="sr-only"
+              />
+              <Icon className="size-5" />
+              {option.label}
+            </label>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
+
+function PaymentPanel({
+  icon: Icon,
+  title,
+  total,
+  children,
+}: {
+  icon: LucideIcon;
+  title: string;
+  total: string;
+  children: React.ReactNode;
+}) {
   return (
     <section className="flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
       <div className="flex items-center justify-between gap-3">
         <h3 className="flex items-center gap-2 font-medium">
-          <LandmarkIcon className="size-4 text-primary" /> Pay by bank transfer
+          <Icon className="size-4 text-primary" /> {title}
         </h3>
         <span className="font-heading text-lg font-bold text-primary tabular-nums">{total}</span>
       </div>
-      <dl className="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2 text-sm">
-        <dt className="text-muted-foreground">Account name</dt>
-        <dd className="min-w-0 font-medium break-words">{bank.accountName}</dd>
-        <dt className="text-muted-foreground">Account number</dt>
-        <dd className="flex min-w-0 items-center gap-2">
-          <span className="font-medium tabular-nums break-all">{bank.accountNumber}</span>
-          <CopyButton value={bank.accountNumber.replace(/[\s-]/g, "")} label="account number" />
-        </dd>
-        <dt className="text-muted-foreground">Bank</dt>
-        <dd className="min-w-0 font-medium break-words">{bank.bankName}</dd>
-        <dt className="text-muted-foreground">Branch</dt>
-        <dd className="min-w-0 font-medium break-words">{bank.branch}</dd>
-      </dl>
+      {children}
     </section>
+  );
+}
+
+function BankPanel({ accounts, total }: { accounts: BankAccount[]; total: string }) {
+  return (
+    <PaymentPanel icon={LandmarkIcon} title="Pay by bank transfer" total={total}>
+      {accounts.length > 1 && <p className="text-sm text-muted-foreground">Transfer to any one of these accounts.</p>}
+      <ul className="flex flex-col gap-2">
+        {accounts.map((account, index) => (
+          <li key={index} className={cn(accounts.length > 1 && "rounded-lg border bg-card p-3")}>
+            <dl className="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2 text-sm">
+              <dt className="text-muted-foreground">Bank</dt>
+              <dd className="min-w-0 font-medium break-words">
+                {account.bankName} · {account.branch}
+              </dd>
+              <dt className="text-muted-foreground">Account name</dt>
+              <dd className="min-w-0 font-medium break-words">{account.accountName}</dd>
+              <dt className="text-muted-foreground">Account number</dt>
+              <dd className="flex min-w-0 items-center gap-2">
+                <span className="font-medium tabular-nums break-all">{account.accountNumber}</span>
+                <CopyButton value={account.accountNumber.replace(/[\s-]/g, "")} label="account number" />
+              </dd>
+            </dl>
+          </li>
+        ))}
+      </ul>
+    </PaymentPanel>
+  );
+}
+
+// The super admin writes the instructions in English, Sinhala and Tamil
+function EzCashPanel({ ezcash, total }: { ezcash: NonNullable<PaymentOptions["ezcash"]>; total: string }) {
+  const [language, setLanguage] = useState<EzCashLanguage>("en");
+  return (
+    <PaymentPanel icon={SmartphoneIcon} title="Pay by eZ Cash" total={total}>
+      <dl className="grid grid-cols-[auto_1fr] items-center gap-x-4 text-sm">
+        <dt className="text-muted-foreground">eZ Cash number</dt>
+        <dd className="flex min-w-0 items-center gap-2">
+          <span className="font-medium tabular-nums">{ezcash.number}</span>
+          <CopyButton value={ezcash.number} label="eZ Cash number" />
+        </dd>
+      </dl>
+      <div className="flex flex-col gap-2">
+        <div role="group" aria-label="Message language" className="flex gap-1 rounded-lg bg-muted p-1">
+          {EZCASH_LANGUAGES.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              lang={option.value}
+              aria-pressed={language === option.value}
+              onClick={() => setLanguage(option.value)}
+              className={cn(
+                "min-h-9 flex-1 rounded-md px-2 text-sm font-medium transition-colors",
+                language === option.value ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <p lang={language} className="text-sm whitespace-pre-line break-words">
+          {ezcash.messages[language]}
+        </p>
+      </div>
+    </PaymentPanel>
+  );
+}
+
+function BinancePanel({ binance, total }: { binance: NonNullable<PaymentOptions["binance"]>; total: string }) {
+  return (
+    <PaymentPanel icon={WalletIcon} title="Pay by Binance" total={total}>
+      <dl className="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2 text-sm">
+        <dt className="text-muted-foreground">Binance Pay ID</dt>
+        <dd className="flex min-w-0 items-center gap-2">
+          <span className="font-medium tabular-nums break-all">{binance.payId}</span>
+          <CopyButton value={binance.payId} label="Binance Pay ID" />
+        </dd>
+        <dt className="text-muted-foreground">Name</dt>
+        <dd className="min-w-0 font-medium break-words">{binance.name}</dd>
+      </dl>
+    </PaymentPanel>
   );
 }
 

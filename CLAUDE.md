@@ -43,8 +43,13 @@ UI/UX rules. Read the relevant section before changing anything.
     (`set_shared_listing_availability()`). `published_listings.seller_ids`/
     `sellers` cover both cases.
   - Top-up orders (`topup_orders`): customers buy from the Buy dialog on
-    `/top-ups` (bank details from `app_settings.bank_*`, player UID,
-    quantity 1–5, WhatsApp, receipt in the private `receipts` bucket). A
+    `/top-ups`, paying by bank transfer (`app_settings.bank_accounts`, any
+    number of accounts), eZ Cash (`ezcash_number` + a message in English,
+    Sinhala and Tamil) or Binance (`binance_pay_id`, `binance_name`); see
+    `lib/payments.ts`. Then player UID, quantity 1–5, WhatsApp and proof of
+    payment (slip/screenshot, private `receipts` bucket); the order keeps
+    `payment_method`. The old single-account `bank_*` columns are unused,
+    left for a later drop. A
     trigger copies name/price from the live top-up. The super admin is
     alerted on WhatsApp via Twilio (`lib/twilio.ts`) plus email, and closes
     orders on `/admin/orders`.

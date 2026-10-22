@@ -3,8 +3,8 @@ import { phoneSchema } from "@/lib/validations/common";
 
 export const MAX_ORDER_QUANTITY = 5;
 
-// Buy dialog on /top-ups. The receipt image is checked separately (it's a
-// File, validated on the server by lib/images.ts).
+// Buy dialog on /top-ups. The proof of payment image is checked separately
+// (it's a File, validated on the server by lib/images.ts).
 export const topupOrderSchema = z.object({
   topupId: z.uuid("Choose a top-up"),
   playerUid: z
@@ -18,6 +18,7 @@ export const topupOrderSchema = z.object({
     .min(1, "Order at least 1")
     .max(MAX_ORDER_QUANTITY, `You can order up to ${MAX_ORDER_QUANTITY} at a time`),
   whatsappNumber: phoneSchema,
+  paymentMethod: z.enum(["bank", "ezcash", "binance"], "Choose how you paid"),
 });
 export type TopupOrderInput = z.input<typeof topupOrderSchema>;
 export type TopupOrderOutput = z.output<typeof topupOrderSchema>;

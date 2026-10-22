@@ -27,7 +27,7 @@ export default function OrdersPage({ searchParams }: Props) {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Top-up orders"
-        description="Check the receipt, top up the player UID, message the customer, then close the order."
+        description="Check the proof of payment, top up the player UID, message the customer, then close the order."
       />
       <Suspense fallback={<SkeletonTableRows rows={4} />}>
         <Orders searchParams={searchParams} />
@@ -53,7 +53,7 @@ async function Orders({ searchParams }: { searchParams: Props["searchParams"] })
     supabase
       .from("topup_orders")
       .select(
-        "id, topup_name, quantity, unit_price, total, currency, player_uid, whatsapp_number, receipt_path, status, created_at, closed_at, customer:profiles!topup_orders_customer_id_fkey(full_name, email)"
+        "id, topup_name, quantity, unit_price, total, currency, player_uid, whatsapp_number, receipt_path, payment_method, status, created_at, closed_at, customer:profiles!topup_orders_customer_id_fkey(full_name, email)"
       )
       .eq("status", status)
       // Oldest open order first (first come, first served); newest closed first

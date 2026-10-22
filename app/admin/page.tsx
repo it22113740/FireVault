@@ -35,7 +35,7 @@ async function SuperAdminStats() {
     supabase.from("sales_admin_applications").select("id", head).eq("status", "pending"),
     supabase.from("listings").select("id", head).eq("publish_status", "published"),
     supabase.from("topups").select("id", head).eq("status", "published"),
-    supabase.from("app_settings").select("admin_whatsapp, bank_account_number").eq("id", 1).single(),
+    supabase.from("app_settings").select("admin_whatsapp, bank_accounts, ezcash_number, binance_pay_id").eq("id", 1).single(),
     supabase.from("topup_orders").select("id", head).eq("status", "open"),
   ]);
 
@@ -51,14 +51,14 @@ async function SuperAdminStats() {
           top-ups or your own listings.
         </Link>
       )}
-      {settings.data && !settings.data.bank_account_number && (
+      {settings.data && !hasPaymentMethod(settings.data) && (
         <Link
           href="/admin/settings"
           className="flex items-center gap-3 rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm"
         >
           <TriangleAlertIcon className="size-5 shrink-0 text-warning" />
-          Add your bank account in Settings so customers can buy top-ups. Until then, the Buy window
-          asks them to message you on WhatsApp.
+          Add a bank account, eZ Cash or Binance in Settings so customers can buy top-ups. Until
+          then, the Buy window asks them to message you on WhatsApp.
         </Link>
       )}
       <StatGrid
@@ -165,4 +165,9 @@ function StatsSkeleton() {
       ))}
     </div>
   );
+}
+
+// Any one of bank transfer, eZ Cash or Binance turns top-up buying on
+function hasPaymentMethod(settings: { bank_accounts: unknown; ezcash_number: string; binance_pay_id: string }) {
+  return (Array.isArray(settings.bank_accounts) && settings.bank_accounts.length > 0) || !!settings.ezcash_number || !!settings.binance_pay_id;
 }

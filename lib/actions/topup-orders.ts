@@ -8,6 +8,7 @@ import { logAudit } from "@/lib/audit";
 import { getCurrentProfile, requireSuperAdmin, type Profile } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
 import { formatPrice, shortId } from "@/lib/format";
+import { availablePaymentMethods, getPaymentOptions, paymentMethodLabel, type PaymentMethod } from "@/lib/payments";
 import { toWebp } from "@/lib/images";
 import { getSettings } from "@/lib/settings";
 import { hasActiveAccess } from "@/lib/sales-admin-access";
@@ -29,6 +30,7 @@ type PlacedOrder = {
   currency: string;
   player_uid: string;
   whatsapp_number: string;
+  payment_method: PaymentMethod;
   created_at: string;
 };
 
@@ -42,12 +44,15 @@ export async function placeTopupOrder(formData: FormData): Promise<ActionResult<
     playerUid: formData.get("playerUid") ?? "",
     quantity: Number(formData.get("quantity")),
     whatsappNumber: formData.get("whatsappNumber") ?? "",
+    paymentMethod: formData.get("paymentMethod") ?? "",
   });
   if (!parsed.success) return invalid(parsed.error);
   const order = parsed.data;
 
   const settings = await getSettings();
-  if (!settings.bank_account_number) return fail("Top-up payments aren't set up yet. Please message us on WhatsApp.");
+  if (!availablePaymentMethods(getPaymentOptions(settings)).includes(order.paymentMethod)) {
+    return fail("This payment method isn't available. Refresh the page and choose another.");
+  }
 
   const supabase = createAdminClient();
   const { count, error: countError } = await supabase
@@ -64,7 +69,7 @@ export async function placeTopupOrder(formData: FormData): Promise<ActionResult<
   // Private bucket with no insert policy: only the server writes receipts
   const receipts = createAdminClient().storage.from(RECEIPTS_BUCKET);
   const { error: uploadError } = await receipts.upload(image.path, image.body, { contentType: "image/webp" });
-  if (uploadError) return fail("Couldn't upload your receipt. Please try again.");
+  if (uploadError) return fail("Couldn't upload your proof of payment. Please try again.");
 
   const { data: saved, error } = await supabase
     .from("topup_orders")
@@ -75,8 +80,9 @@ export async function placeTopupOrder(formData: FormData): Promise<ActionResult<
       quantity: order.quantity,
       whatsapp_number: order.whatsappNumber,
       receipt_path: image.path,
+      payment_method: order.paymentMethod,
     })
-    .select("id, topup_name, quantity, total, currency, player_uid, whatsapp_number, created_at")
+    .select("id, topup_name, quantity, total, currency, player_uid, whatsapp_number, payment_method, created_at")
     .single();
   if (error || !saved) {
     await receipts.remove([image.path]);
@@ -127,6 +133,7 @@ async function notifyNewOrder(
     `Order: ${shortId(order.id)}`,
     `Item: ${item}`,
     `Total: ${total}`,
+    `Paid by: ${paymentMethodLabel(order.payment_method)}`,
     `Player UID: ${order.player_uid}`,
     customer ? `Customer: ${customer.full_name} (${customer.email})` : "Customer: Guest",
     `Customer WhatsApp: ${order.whatsapp_number}`,
@@ -139,7 +146,8 @@ async function notifyNewOrder(
     const variables: Record<string, string> = {
       "1": shortId(order.id),
       "2": item,
-      "3": total,
+      // The approved template has no payment line, so it rides along here
+      "3": `${total} · ${paymentMethodLabel(order.payment_method)}`,
       "4": order.player_uid,
       "5": order.whatsapp_number,
       "6": link,
@@ -172,7 +180,7 @@ async function notifyNewOrder(
         sendEmail({
           to,
           subject: `New top-up order ${shortId(order.id)}: ${item}`,
-          text: ["A customer placed a top-up order and uploaded a payment receipt.", "", ...lines].join("\n"),
+          text: ["A customer placed a top-up order and uploaded proof of payment.", "", ...lines].join("\n"),
         })
       )
     );

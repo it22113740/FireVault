@@ -1,5 +1,15 @@
 import { z } from "zod";
-import { passwordSchema, phoneSchema } from "@/lib/validations/common";
+import { MAX_BANK_ACCOUNTS, bankAccountSchema } from "@/lib/payments";
+import { passwordSchema, phoneSchema, toE164 } from "@/lib/validations/common";
+
+// Empty turns eZ Cash off
+const optionalPhoneSchema = z
+  .string()
+  .trim()
+  .refine((value) => value === "" || toE164(value) !== null, "Enter a valid phone number, e.g. 077 123 4567")
+  .transform((value) => (value === "" ? "" : toE164(value)!));
+
+const ezcashMessageSchema = z.string().trim().max(1000, "Keep it under 1,000 characters");
 
 export const settingsSchema = z.object({
   adminWhatsapp: phoneSchema,
@@ -25,23 +35,27 @@ export const settingsSchema = z.object({
         .min(1, "Add at least one region")
         .max(30, "Add 30 regions at most")
     ),
-  // Bank account top-up buyers pay into (shown in the Buy dialog). All four
-  // are optional together; leaving them empty turns top-up buying off.
-  bankAccountName: z.string().trim().max(100, "Keep it under 100 characters"),
-  bankAccountNumber: z
-    .string()
-    .trim()
-    .regex(/^[0-9 -]{0,30}$/, "Use digits only (spaces and dashes are fine)"),
-  bankName: z.string().trim().max(100, "Keep it under 100 characters"),
-  bankBranch: z.string().trim().max(100, "Keep it under 100 characters"),
+  // Top-up payment methods shown in the Buy dialog. Each one is optional;
+  // with none set up, top-up buying is off.
+  bankAccounts: z.array(bankAccountSchema).max(MAX_BANK_ACCOUNTS, `Add ${MAX_BANK_ACCOUNTS} bank accounts at most`),
+  ezcashNumber: optionalPhoneSchema,
+  ezcashMessageEn: ezcashMessageSchema,
+  ezcashMessageSi: ezcashMessageSchema,
+  ezcashMessageTa: ezcashMessageSchema,
+  binancePayId: z.string().trim().regex(/^[0-9]{0,20}$/, "Use the numeric Binance Pay ID"),
+  binanceName: z.string().trim().max(100, "Keep it under 100 characters"),
   // Sellers in the homepage "Want to sell account?" window, in order
   sellContactSellerIds: z.array(z.uuid("Choose sellers from the list")).max(30, "Choose up to 30 sellers"),
 }).superRefine((value, ctx) => {
-  const fields = ["bankAccountName", "bankAccountNumber", "bankName", "bankBranch"] as const;
-  const filled = fields.filter((field) => value[field] !== "");
-  if (filled.length === 0 || filled.length === fields.length) return;
-  for (const field of fields) {
-    if (value[field] === "") ctx.addIssue({ code: "custom", path: [field], message: "Fill in all bank details, or leave them all empty" });
+  // eZ Cash needs its instructions in all three languages
+  if (value.ezcashNumber) {
+    for (const field of ["ezcashMessageEn", "ezcashMessageSi", "ezcashMessageTa"] as const) {
+      if (!value[field]) ctx.addIssue({ code: "custom", path: [field], message: "Write the message in all three languages" });
+    }
+  }
+  if (!value.binancePayId !== !value.binanceName) {
+    const field = value.binancePayId ? "binanceName" : "binancePayId";
+    ctx.addIssue({ code: "custom", path: [field], message: "Fill in both Binance details, or leave both empty" });
   }
 });
 export type SettingsInput = z.input<typeof settingsSchema>;

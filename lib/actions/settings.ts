@@ -29,10 +29,13 @@ export async function updateSettings(input: SettingsInput): Promise<ActionResult
       currency: parsed.data.currency,
       inactive_message: parsed.data.inactiveMessage,
       regions: parsed.data.regions,
-      bank_account_name: parsed.data.bankAccountName,
-      bank_account_number: parsed.data.bankAccountNumber,
-      bank_name: parsed.data.bankName,
-      bank_branch: parsed.data.bankBranch,
+      bank_accounts: parsed.data.bankAccounts,
+      ezcash_number: parsed.data.ezcashNumber,
+      ezcash_message_en: parsed.data.ezcashMessageEn,
+      ezcash_message_si: parsed.data.ezcashMessageSi,
+      ezcash_message_ta: parsed.data.ezcashMessageTa,
+      binance_pay_id: parsed.data.binancePayId,
+      binance_name: parsed.data.binanceName,
       sell_contact_seller_ids: parsed.data.sellContactSellerIds,
     })
     .eq("id", 1);

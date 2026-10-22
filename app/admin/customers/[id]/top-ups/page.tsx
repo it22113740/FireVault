@@ -34,7 +34,7 @@ async function History({ params, searchParams }: Props) {
   const requested = Number((await searchParams).page ?? 1);
   const page = Number.isSafeInteger(requested) ? Math.max(1, Math.min(pages, requested)) : 1;
   const { data: orders, error } = await db.from("topup_orders")
-    .select("id, topup_name, quantity, unit_price, total, currency, player_uid, whatsapp_number, receipt_path, status, created_at, closed_at")
+    .select("id, topup_name, quantity, unit_price, total, currency, player_uid, whatsapp_number, receipt_path, payment_method, status, created_at, closed_at")
     .eq("customer_id", id).order("created_at", { ascending: false }).order("id")
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
   if (error) throw new Error("Couldn't load customer orders");

@@ -8,13 +8,14 @@ import { SkeletonGrid } from "@/components/skeletons";
 import { TopupCard } from "@/components/topup-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getCurrentProfile } from "@/lib/auth";
+import { getPaymentOptions } from "@/lib/payments";
 import { getSettings } from "@/lib/settings";
 import { getPublishedTopups } from "@/lib/store";
 import { TOPUP_CATEGORIES, parseTopupCategory, topupCategoryLabel } from "@/lib/topups";
 
 export const metadata: Metadata = {
   title: "Top-ups",
-  description: "Membership, VIP bundles, diamond packs and level up passes. Pay by bank transfer and order online.",
+  description: "Membership, VIP bundles, diamond packs and level up passes. Pay by bank transfer, eZ Cash or Binance and order online.",
 };
 
 type Props = PageProps<"/top-ups">;
@@ -25,8 +26,8 @@ export default function TopupsPage({ searchParams }: Props) {
       <div>
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Top-ups</h1>
         <p className="mt-2 text-muted-foreground">
-          Pick a pack, pay by bank transfer and send us the receipt. We check the payment and top up
-          your account, then message you on WhatsApp.
+          Pick a pack, pay by bank transfer, eZ Cash or Binance, and send us proof of payment. We
+          check the payment and top up your account, then message you on WhatsApp.
         </p>
       </div>
       <Suspense
@@ -49,14 +50,7 @@ async function Topups({ searchParams }: { searchParams: Props["searchParams"] })
   const shown = topups.filter((topup) => topup.category === category);
   // Everyone can buy; signed-in visitors get their WhatsApp pre-filled.
   const buy = {
-    bank: settings.bank_account_number
-      ? {
-          accountName: settings.bank_account_name,
-          accountNumber: settings.bank_account_number,
-          bankName: settings.bank_name,
-          branch: settings.bank_branch,
-        }
-      : null,
+    payments: getPaymentOptions(settings),
     defaultWhatsapp: viewer?.whatsapp_number ?? "",
   };
 

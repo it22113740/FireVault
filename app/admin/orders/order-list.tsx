@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { setTopupOrderClosed } from "@/lib/actions/topup-orders";
 import type { Enums } from "@/lib/database.types";
 import { formatDate, formatPrice, shortId } from "@/lib/format";
+import { paymentMethodLabel } from "@/lib/payments";
 import { cn } from "@/lib/utils";
 import { whatsappUrl } from "@/lib/whatsapp";
 
@@ -23,6 +24,7 @@ export type OrderRow = {
   currency: string;
   player_uid: string;
   whatsapp_number: string;
+  payment_method: Enums<"topup_payment_method">;
   status: Enums<"topup_order_status">;
   created_at: string;
   closed_at: string | null;
@@ -83,14 +85,14 @@ function OrderCard({ order, focused }: { order: OrderRow; focused: boolean }) {
           type="button"
           onClick={() => setZoom(true)}
           className="relative aspect-[3/4] w-full overflow-hidden rounded-lg border bg-muted sm:w-32"
-          aria-label={`View receipt for order ${shortId(order.id)}`}
+          aria-label={`View proof of payment for order ${shortId(order.id)}`}
         >
           {/* eslint-disable-next-line @next/next/no-img-element -- short-lived signed URL */}
           <img src={order.receiptUrl} alt="" className="size-full object-cover" />
         </button>
       ) : (
         <div className="flex aspect-[3/4] items-center justify-center rounded-lg border bg-muted text-xs text-muted-foreground sm:w-32">
-          No receipt
+          No proof of payment
         </div>
       )}
 
@@ -120,6 +122,7 @@ function OrderCard({ order, focused }: { order: OrderRow; focused: boolean }) {
           <Detail label="Price">
             {formatPrice(order.unit_price, order.currency)} × {order.quantity}
           </Detail>
+          <Detail label="Paid by">{paymentMethodLabel(order.payment_method)}</Detail>
           <Detail label="Customer">
             {order.customerName}
             {order.customerEmail && (
@@ -163,11 +166,11 @@ function OrderCard({ order, focused }: { order: OrderRow; focused: boolean }) {
       {order.receiptUrl && (
         <Dialog open={zoom} onOpenChange={setZoom}>
           <DialogContent className="max-w-2xl p-2 sm:max-w-2xl">
-            <DialogTitle className="sr-only">Receipt for order {shortId(order.id)}</DialogTitle>
+            <DialogTitle className="sr-only">Proof of payment for order {shortId(order.id)}</DialogTitle>
             {/* eslint-disable-next-line @next/next/no-img-element -- short-lived signed URL */}
             <img
               src={order.receiptUrl}
-              alt={`Payment receipt for order ${shortId(order.id)}`}
+              alt={`Proof of payment for order ${shortId(order.id)}`}
               className="max-h-[85svh] w-full rounded-lg object-contain"
             />
           </DialogContent>
