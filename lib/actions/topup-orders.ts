@@ -17,6 +17,8 @@ import { RECEIPTS_BUCKET } from "@/lib/storage";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { sendWhatsApp } from "@/lib/twilio";
+import { whatsappUrl } from "@/lib/whatsapp";
+import { topupOrderMessage } from "@/lib/whatsapp-messages";
 import { uuidSchema } from "@/lib/validations/common";
 import { topupOrderSchema } from "@/lib/validations/topup-order";
 
@@ -36,7 +38,7 @@ type PlacedOrder = {
 
 // Buy dialog on /top-ups. The trigger fills in the name and price from the
 // live top-up, so the client can't change what it pays.
-export async function placeTopupOrder(formData: FormData): Promise<ActionResult<{ id: string }>> {
+export async function placeTopupOrder(formData: FormData): Promise<ActionResult<{ id: string; whatsappUrl: string }>> {
   const customer = await getCurrentProfile();
   if (customer && !hasActiveAccess(customer)) return fail("Your account is inactive. Please contact the administrator.");
   const parsed = topupOrderSchema.safeParse({
@@ -93,7 +95,18 @@ export async function placeTopupOrder(formData: FormData): Promise<ActionResult<
 
   // Alerts go out after the response so the customer isn't kept waiting
   after(() => notifyNewOrder(saved, customer, settings.admin_whatsapp, { path: image.path, webp: image.body }));
-  return ok({ id: saved.id });
+  // The "Order placed" screen's button: the customer sends us the order on WhatsApp
+  const message = topupOrderMessage({
+    id: saved.id,
+    item: `${saved.topup_name} × ${saved.quantity}`,
+    total: formatPrice(saved.total, saved.currency),
+    paymentMethod: paymentMethodLabel(saved.payment_method),
+    playerUid: saved.player_uid,
+    whatsappNumber: saved.whatsapp_number,
+    customerName: customer?.full_name ?? null,
+    proofUrl: `${SITE_URL}/payment-proof/${saved.id}`,
+  });
+  return ok({ id: saved.id, whatsappUrl: whatsappUrl(settings.admin_whatsapp, message) });
 }
 
 // The WhatsApp alert carries the receipt image. WhatsApp shows WebP as a

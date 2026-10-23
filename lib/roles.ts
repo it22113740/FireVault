@@ -52,6 +52,8 @@ const PUBLIC_PATHS = [
   "/auth/confirm",
   "/inactive",
   "/apply",
+  // Proof-of-payment links in customers' WhatsApp order messages
+  "/payment-proof",
 ];
 
 export function isPublicPath(pathname: string) {

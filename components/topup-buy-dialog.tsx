@@ -8,6 +8,7 @@ import {
   CheckIcon,
   CopyIcon,
   LandmarkIcon,
+  MessageCircleIcon,
   MinusIcon,
   PlusIcon,
   ShoppingCartIcon,
@@ -52,6 +53,8 @@ type TopupBuyDialogProps = {
   defaultWhatsapp: string;
 };
 
+type PlacedOrder = { id: string; whatsappUrl: string };
+
 const METHOD_ICONS: Record<PaymentMethod, LucideIcon> = {
   bank: LandmarkIcon,
   ezcash: SmartphoneIcon,
@@ -63,7 +66,7 @@ const METHOD_ICONS: Record<PaymentMethod, LucideIcon> = {
 // Buy button.
 export function TopupBuyDialog({ topup, currency, payments, defaultWhatsapp }: TopupBuyDialogProps) {
   const [open, setOpen] = useState(false);
-  const [placedId, setPlacedId] = useState<string | null>(null);
+  const [placed, setPlaced] = useState<PlacedOrder | null>(null);
   const methods = availablePaymentMethods(payments);
 
   return (
@@ -76,12 +79,12 @@ export function TopupBuyDialog({ topup, currency, payments, defaultWhatsapp }: T
         onOpenChange={(next) => {
           setOpen(next);
           // Start fresh next time once an order went through
-          if (!next && placedId) setPlacedId(null);
+          if (!next && placed) setPlaced(null);
         }}
       >
         <DialogContent className="max-h-[calc(100svh-2rem)] overflow-y-auto sm:max-w-lg">
-          {placedId ? (
-            <OrderPlaced id={placedId} onClose={() => setOpen(false)} />
+          {placed ? (
+            <OrderPlaced order={placed} onClose={() => setOpen(false)} />
           ) : (
             <>
               <div className="flex flex-col gap-1 pr-8">
@@ -95,7 +98,7 @@ export function TopupBuyDialog({ topup, currency, payments, defaultWhatsapp }: T
                   payments={payments}
                   methods={methods}
                   defaultWhatsapp={defaultWhatsapp}
-                  onPlaced={setPlacedId}
+                  onPlaced={setPlaced}
                 />
               ) : (
                 <p className="rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm">
@@ -117,7 +120,7 @@ function BuyForm({
   methods,
   defaultWhatsapp,
   onPlaced,
-}: TopupBuyDialogProps & { methods: PaymentMethod[]; onPlaced: (id: string) => void }) {
+}: TopupBuyDialogProps & { methods: PaymentMethod[]; onPlaced: (order: PlacedOrder) => void }) {
   const [pending, startTransition] = useTransition();
   const [receipt, setReceipt] = useState<File | null>(null);
   const [receiptError, setReceiptError] = useState<string>();
@@ -163,7 +166,7 @@ function BuyForm({
         return showActionError(result, form.setError);
       }
       toast.success("Order placed.");
-      onPlaced(result.data.id);
+      onPlaced(result.data);
     });
   });
 
@@ -445,16 +448,26 @@ function CopyButton({ value, label }: { value: string; label: string }) {
   );
 }
 
-function OrderPlaced({ id, onClose }: { id: string; onClose: () => void }) {
+// The WhatsApp button sends us the order details and a link to the proof of
+// payment, so we can check it straight away
+function OrderPlaced({ order, onClose }: { order: PlacedOrder; onClose: () => void }) {
   return (
     <div className="flex flex-col items-center gap-3 py-4 text-center">
       <CheckCircle2Icon className="size-12 text-success" />
       <DialogTitle className="font-heading text-xl">Order placed</DialogTitle>
       <DialogDescription>
-        Order <span className="font-mono font-medium text-foreground">{shortId(id)}</span> is with us. We&apos;ll
-        check your payment, top up your account and message you on WhatsApp.
+        Order <span className="font-mono font-medium text-foreground">{shortId(order.id)}</span> is with us. Send us
+        the order on WhatsApp so we can check your payment and top up your account sooner.
       </DialogDescription>
-      <Button size="lg" className="mt-2 h-11 w-full" onClick={onClose}>
+      <Button
+        size="lg"
+        className="mt-2 h-12 w-full text-base"
+        nativeButton={false}
+        render={<a href={order.whatsappUrl} target="_blank" rel="noopener noreferrer" />}
+      >
+        <MessageCircleIcon /> Send order on WhatsApp
+      </Button>
+      <Button size="lg" variant="outline" className="h-11 w-full" onClick={onClose}>
         Done
       </Button>
     </div>
