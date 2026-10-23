@@ -385,7 +385,7 @@ function BankPanel({ accounts, total }: { accounts: BankAccount[]; total: string
 
 // The super admin writes the instructions in English, Sinhala and Tamil
 function EzCashPanel({ ezcash, total }: { ezcash: NonNullable<PaymentOptions["ezcash"]>; total: string }) {
-  const [language, setLanguage] = useState<EzCashLanguage>("en");
+  const [language, setLanguage] = useState<EzCashLanguage>(EZCASH_LANGUAGES[0].value);
   return (
     <PaymentPanel icon={SmartphoneIcon} title="Pay by eZ Cash" total={total}>
       <dl className="grid grid-cols-[auto_1fr] items-center gap-x-4 text-sm">

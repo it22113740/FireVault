@@ -22,10 +22,11 @@ import {
 type SellerChoice = { id: string; name: string; hasWhatsapp: boolean };
 type SettingsFormApi = UseFormReturn<SettingsInput, unknown, SettingsOutput>;
 
+// Same order as the Buy dialog's language buttons (EZCASH_LANGUAGES)
 const EZCASH_MESSAGE_FIELDS = [
+  { name: "ezcashMessageTa", label: "தமிழ்", lang: "ta" },
   { name: "ezcashMessageEn", label: "English", lang: "en" },
   { name: "ezcashMessageSi", label: "සිංහල", lang: "si" },
-  { name: "ezcashMessageTa", label: "தமிழ்", lang: "ta" },
 ] as const;
 
 export function SettingsForm({ defaults, sellers }: { defaults: SettingsInput; sellers: SellerChoice[] }) {

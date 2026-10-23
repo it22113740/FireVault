@@ -30,10 +30,11 @@ export function paymentMethodLabel(method: PaymentMethod) {
   return PAYMENT_METHODS.find((option) => option.value === method)!.label;
 }
 
+// In this order in the Buy dialog and Settings; the first is shown by default
 export const EZCASH_LANGUAGES = [
+  { value: "ta", label: "தமிழ்" },
   { value: "en", label: "English" },
   { value: "si", label: "සිංහල" },
-  { value: "ta", label: "தமிழ்" },
 ] as const;
 export type EzCashLanguage = (typeof EZCASH_LANGUAGES)[number]["value"];
 
