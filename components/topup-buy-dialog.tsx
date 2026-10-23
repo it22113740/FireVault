@@ -77,14 +77,21 @@ export function TopupBuyDialog({ topup, currency, payments, defaultWhatsapp }: T
       <Dialog
         open={open}
         onOpenChange={(next) => {
-          setOpen(next);
-          // Start fresh next time once an order went through
-          if (!next && placed) setPlaced(null);
+          // Once ordered, the only way out is sending the order on WhatsApp
+          // (no close button, Escape or outside click)
+          if (!placed) setOpen(next);
         }}
       >
-        <DialogContent className="max-h-[calc(100svh-2rem)] overflow-y-auto sm:max-w-lg">
+        <DialogContent className="max-h-[calc(100svh-2rem)] overflow-y-auto sm:max-w-lg" showCloseButton={!placed}>
           {placed ? (
-            <OrderPlaced order={placed} onClose={() => setOpen(false)} />
+            <OrderPlaced
+              order={placed}
+              onSent={() => {
+                setOpen(false);
+                // Start fresh next time
+                setPlaced(null);
+              }}
+            />
           ) : (
             <>
               <div className="flex flex-col gap-1 pr-8">
@@ -448,27 +455,25 @@ function CopyButton({ value, label }: { value: string; label: string }) {
   );
 }
 
-// The WhatsApp button sends us the order details and a link to the proof of
-// payment, so we can check it straight away
-function OrderPlaced({ order, onClose }: { order: PlacedOrder; onClose: () => void }) {
+// Required last step: the WhatsApp message carries the order details and a
+// link to the proof of payment, and we work from that chat. Sending it is the
+// only way to close the dialog.
+function OrderPlaced({ order, onSent }: { order: PlacedOrder; onSent: () => void }) {
   return (
     <div className="flex flex-col items-center gap-3 py-4 text-center">
       <CheckCircle2Icon className="size-12 text-success" />
-      <DialogTitle className="font-heading text-xl">Order placed</DialogTitle>
+      <DialogTitle className="font-heading text-xl">One last step</DialogTitle>
       <DialogDescription>
-        Order <span className="font-mono font-medium text-foreground">{shortId(order.id)}</span> is with us. Send us
-        the order on WhatsApp so we can check your payment and top up your account sooner.
+        Order <span className="font-mono font-medium text-foreground">{shortId(order.id)}</span> is saved. Send it to
+        us on WhatsApp to complete your order: we only start once we receive your message.
       </DialogDescription>
       <Button
         size="lg"
         className="mt-2 h-12 w-full text-base"
         nativeButton={false}
-        render={<a href={order.whatsappUrl} target="_blank" rel="noopener noreferrer" />}
+        render={<a href={order.whatsappUrl} target="_blank" rel="noopener noreferrer" onClick={onSent} />}
       >
         <MessageCircleIcon /> Send order on WhatsApp
-      </Button>
-      <Button size="lg" variant="outline" className="h-11 w-full" onClick={onClose}>
-        Done
       </Button>
     </div>
   );
